@@ -33,3 +33,6 @@ def floatArraySum.usize_loop_get! (xs : FloatArray) : Float := Id.run do
   for (i : USize) in 0...(xs.size.toUSize) do
     s := s + xs[i]!
   return s
+
+@[extern "lean_float_array_sum"]
+opaque floatArraySum.c_loop (xs : @& FloatArray) : Float

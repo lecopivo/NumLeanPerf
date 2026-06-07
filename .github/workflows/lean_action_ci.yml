@@ -27,7 +27,7 @@ jobs:
         with:
           build: false
       - name: Build Lean targets
-        run: lake build NumLeanPerf numleanperf float-array-sum-bench float-array-add-bench
+        run: lake build
       - name: Check benchmark runner syntax
         run: python3 -m py_compile benchmarks/run.py
       - name: Check website JavaScript syntax

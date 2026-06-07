@@ -23,20 +23,29 @@ SIZE_PRESETS = {
 
 def load_benchmarks():
     benchmarks = {}
-    for config_path in sorted((ROOT / "NumLeanPerf").glob("*/benchmark.json")):
-        bench = json.loads(config_path.read_text())
-        bench_id = bench["id"]
-        bench["configFile"] = str(config_path.relative_to(ROOT))
-        if "cSource" in bench:
-            bench["cSource"] = ROOT / bench["cSource"]
-        if "cExeName" in bench:
-            bench["cExe"] = BIN_DIR / bench["cExeName"]
-        else:
-            bench["cExe"] = BIN_DIR / f"{bench_id}-c-bench"
-        benchmarks[bench_id] = bench
+    for bench_path in sorted((ROOT / "NumLeanPerf").glob("*/Bench.lean")):
+        module_dir = bench_path.parent.name
+        bench_id = camel_to_kebab(module_dir)
+        benchmarks[bench_id] = {
+            "id": bench_id,
+            "moduleDir": module_dir,
+            "leanExe": f"{bench_id}-bench",
+            "benchFile": str(bench_path.relative_to(ROOT)),
+        }
     if not benchmarks:
-        raise SystemExit("no benchmark configs found under NumLeanPerf/*/benchmark.json")
+        raise SystemExit("no benchmarks found under NumLeanPerf/*/Bench.lean")
     return benchmarks
+
+
+def camel_to_kebab(name):
+    parts = []
+    start = 0
+    for i, ch in enumerate(name):
+        if i > 0 and ch.isupper() and (not name[i - 1].isupper()):
+            parts.append(name[start:i].lower())
+            start = i
+    parts.append(name[start:].lower())
+    return "-".join(parts)
 
 
 def run(cmd, *, check=True):
@@ -112,19 +121,26 @@ def source_code(source_file):
 
 def extract_lean_definition(source, symbol):
     lines = source.splitlines()
-    start = None
-    pattern = re.compile(rf"^(?:partial\s+)?def\s+{re.escape(symbol)}(?:\s|\(|:)")
+    decl = r"(?:partial\s+)?(?:def|opaque)"
+    decl_pattern = re.compile(rf"^{decl}\s+{re.escape(symbol)}(?:\s|\(|:)")
+    any_decl_pattern = re.compile(rf"^{decl}\s+")
+    attr_pattern = re.compile(r"^@\[")
+
+    decl_start = None
     for idx, line in enumerate(lines):
-        if pattern.match(line):
-            start = idx
+        if decl_pattern.match(line):
+            decl_start = idx
             break
-    if start is None:
+    if decl_start is None:
         return source
 
+    start = decl_start
+    while start > 0 and attr_pattern.match(lines[start - 1]):
+        start -= 1
+
     end = len(lines)
-    next_decl = re.compile(r"^(?:partial\s+)?def\s+")
-    for idx in range(start + 1, len(lines)):
-        if next_decl.match(lines[idx]):
+    for idx in range(decl_start + 1, len(lines)):
+        if attr_pattern.match(lines[idx]) or any_decl_pattern.match(lines[idx]):
             end = idx
             break
     return "\n".join(lines[start:end]).rstrip() + "\n"
@@ -169,20 +185,23 @@ def implementation_code(impl):
 
 
 def build_targets(benchmarks, selected):
-    BIN_DIR.mkdir(parents=True, exist_ok=True)
     for bench_id in selected:
         bench = benchmarks[bench_id]
         run(["lake", "build", bench["leanExe"]])
-        if "cSource" in bench:
-            run(["cc", *CFLAGS, "-std=c11", "-I", str(ROOT), str(bench["cSource"]), "-lm", "-o", str(bench["cExe"])])
+
+
+def load_metadata(benchmarks, selected):
+    for bench_id in selected:
+        bench = benchmarks[bench_id]
+        exe = ROOT / ".lake" / "build" / "bin" / bench["leanExe"]
+        metadata = json.loads(run([str(exe), "--metadata"]))
+        metadata["leanExe"] = bench["leanExe"]
+        metadata["benchFile"] = bench["benchFile"]
+        benchmarks[bench_id] = metadata
 
 
 def executable_for(bench, impl):
-    if impl["language"] == "lean":
-        return ROOT / ".lake" / "build" / "bin" / bench["leanExe"]
-    if impl["language"] == "c":
-        return bench["cExe"]
-    raise ValueError(f"unsupported language: {impl['language']}")
+    return ROOT / ".lake" / "build" / "bin" / bench["leanExe"]
 
 
 def parse_timings(stdout, expected_count, batch_size):
@@ -290,6 +309,7 @@ def main():
     command = " ".join(["benchmarks/run.py", *os.sys.argv[1:]])
     if not args.no_build:
         build_targets(benchmarks, selected)
+    load_metadata(benchmarks, selected)
 
     created_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     run_id = safe_timestamp(created_at)

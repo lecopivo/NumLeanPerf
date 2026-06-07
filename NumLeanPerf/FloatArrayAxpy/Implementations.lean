@@ -21,3 +21,6 @@ def floatArrayAxpy.loop_set (a : Float) (x y : FloatArray) : FloatArray := Id.ru
     let xi := x[i]!
     y := y.set! i.toNat (yi + a * xi)
   return y
+
+@[extern "lean_float_array_axpy"]
+opaque floatArrayAxpy.c_loop (a : Float) (x : @& FloatArray) (y : FloatArray) : FloatArray

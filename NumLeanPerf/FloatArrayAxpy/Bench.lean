@@ -1,16 +1,52 @@
 import NumLeanPerf.Benchmark.Common
 import NumLeanPerf.FloatArrayAxpy.Implementations
 
-def axpyImplementations : List (String × (FloatArray → FloatArray → FloatArray)) := [
-  ("lean.floatArrayAxpy.loop_uset", floatArrayAxpy.loop_uset 1.234),
-  ("lean.floatArrayAxpy.loop_fset", floatArrayAxpy.loop_fset 1.234),
-  ("lean.floatArrayAxpy.loop_set", floatArrayAxpy.loop_set 1.234)
+def floatArrayAxpyBenchmarkId := "float-array-axpy"
+def floatArrayAxpyBenchmarkName := "FloatArray axpy"
+def floatArrayAxpyBenchmarkDescription := "BLAS operation axpy, `y <- y + a * x`."
+
+def axpyImplementations : List (BenchmarkImplementation (FloatArray → FloatArray → FloatArray)) := [
+  {
+    id := "lean.floatArrayAxpy.loop_uset"
+    language := "lean"
+    name := "Lean loop_uset"
+    sourceFile := "NumLeanPerf/FloatArrayAxpy/Implementations.lean"
+    symbol := "floatArrayAxpy.loop_uset"
+    run := floatArrayAxpy.loop_uset 1.234
+  },
+  {
+    id := "lean.floatArrayAxpy.loop_fset"
+    language := "lean"
+    name := "Lean loop_fset"
+    sourceFile := "NumLeanPerf/FloatArrayAxpy/Implementations.lean"
+    symbol := "floatArrayAxpy.loop_fset"
+    run := floatArrayAxpy.loop_fset 1.234
+  },
+  {
+    id := "lean.floatArrayAxpy.loop_set"
+    language := "lean"
+    name := "Lean loop_set"
+    sourceFile := "NumLeanPerf/FloatArrayAxpy/Implementations.lean"
+    symbol := "floatArrayAxpy.loop_set"
+    run := floatArrayAxpy.loop_set 1.234
+  },
+  {
+    id := "c.floatArrayAxpy.loop"
+    language := "c"
+    name := "C loop via Lean FFI"
+    sourceFile := "NumLeanPerf/FloatArrayAxpy/float_array_axpy.c"
+    symbol := "lean_float_array_axpy"
+    run := floatArrayAxpy.c_loop 1.234
+  }
 ]
 
 def axpyImplementation? (name : String) : Option (FloatArray → FloatArray → FloatArray) :=
-  (axpyImplementations.find? (fun entry => entry.fst == name)).map Prod.snd
+  (axpyImplementations.find? (fun entry => entry.id == name)).map (·.run)
 
 def main (args : List String) : IO UInt32 := do
+  if args[0]? == some "--metadata" then
+    IO.println (renderBenchmarkMetadata floatArrayAxpyBenchmarkId floatArrayAxpyBenchmarkName floatArrayAxpyBenchmarkDescription axpyImplementations)
+    return 0
   let some implName := args[0]?
     | IO.eprintln "usage: float-array-axpy-bench <implementation> <array-size> <samples> <warmups> <batch-size>"; return 2
   let some n := parseNatArg? args 1

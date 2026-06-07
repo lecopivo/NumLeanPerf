@@ -27,6 +27,48 @@ def fingerprintFloatArray (xs : FloatArray) : Float :=
   else
     0.0
 
+structure BenchmarkImplementation (α : Type) where
+  id : String
+  language : String
+  name : String
+  sourceFile : String
+  symbol : String
+  run : α
+
+def jsonEscape (s : String) : String := Id.run do
+  let mut out := ""
+  for c in s.toList do
+    out := out ++ match c with
+      | '"' => "\\\""
+      | '\\' => "\\\\"
+      | '\n' => "\\n"
+      | '\r' => "\\r"
+      | '\t' => "\\t"
+      | c => c.toString
+  return out
+
+def jsonString (s : String) : String :=
+  "\"" ++ jsonEscape s ++ "\""
+
+def renderImplementationMetadata {α : Type} (impl : BenchmarkImplementation α) : String :=
+  "{" ++
+  "\"id\":" ++ jsonString impl.id ++ "," ++
+  "\"language\":" ++ jsonString impl.language ++ "," ++
+  "\"name\":" ++ jsonString impl.name ++ "," ++
+  "\"sourceFile\":" ++ jsonString impl.sourceFile ++ "," ++
+  "\"symbol\":" ++ jsonString impl.symbol ++
+  "}"
+
+def renderBenchmarkMetadata {α : Type} (id name description : String) (impls : List (BenchmarkImplementation α)) : String :=
+  let implementations := String.intercalate "," (impls.map renderImplementationMetadata)
+  "{" ++
+  "\"id\":" ++ jsonString id ++ "," ++
+  "\"name\":" ++ jsonString name ++ "," ++
+  "\"description\":" ++ jsonString description ++ "," ++
+  "\"inputAxes\":[{\"id\":\"arraySize\",\"name\":\"Array size\",\"unit\":\"elements\"}]," ++
+  "\"implementations\":[" ++ implementations ++ "]" ++
+  "}"
+
 def runBatch (batchSize startIndex : Nat) (runOnce : Nat → IO Float) : IO Float := do
   let mut checksum := 0.0
   for k in [0:batchSize] do

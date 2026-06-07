@@ -17,3 +17,6 @@ def floatArrayAdd.foreach_zip (xs ys : FloatArray) : FloatArray := Id.run do
     out := out.push (x + ys[i]!)
     i := i + 1
   return out
+
+@[extern "lean_float_array_add"]
+opaque floatArrayAdd.c_loop (xs : @& FloatArray) (ys : FloatArray) : FloatArray

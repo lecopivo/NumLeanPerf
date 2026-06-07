@@ -11,27 +11,27 @@ NumLeanPerf/FloatArraySum/
   Implementations.lean
   Bench.lean
   float_array_sum.c
-  benchmark.json
 ```
 
 Generic benchmark infrastructure lives outside benchmark directories:
 
 ```text
 NumLeanPerf/Benchmark/Common.lean
-NumLeanPerf/Benchmark/benchmark.h
 benchmarks/run.py
 benchmarks/site/
 benchmarks/results/
 ```
 
-`benchmarks/run.py` discovers benchmarks by reading `NumLeanPerf/*/benchmark.json`. New benchmarks should not require edits to `benchmarks/run.py` or the website.
+`benchmarks/run.py` discovers benchmarks by finding `NumLeanPerf/*/Bench.lean`. New benchmarks should not require edits to `benchmarks/run.py` or the website.
+
+Lake recursively compiles every `.c` file under `NumLeanPerf/` into one static library and links it into the Lean executables. C implementations are called directly from Lean using `@[extern]`; there is no separate C benchmark executable or C harness.
 
 ## Build
 
 Build the library, example executable, and benchmark executables:
 
 ```sh
-lake build NumLeanPerf numleanperf float-array-sum-bench float-array-add-bench
+lake build
 ```
 
 ## Run Benchmarks
@@ -79,7 +79,7 @@ Measurement safeguards:
 - Process startup and input construction are outside the timed region.
 - Each sample times a batch and divides by `batchSize`, which avoids zero-duration samples for small inputs.
 - Outputs are consumed so implementations cannot be eliminated as dead code.
-- C benchmarks use compiler memory barriers around measured arrays to prevent hoisting or store elimination.
+- C implementations are called through Lean FFI and timed by the same Lean harness as Lean implementations.
 - `FloatArrayAdd` measures construction of the output array. It does not intentionally measure an extra full traversal of the output array.
 
 ## Add A Benchmark
@@ -91,7 +91,6 @@ NumLeanPerf/MyBenchmark/
   Implementations.lean
   Bench.lean
   my_benchmark.c
-  benchmark.json
 ```
 
 ### Lean Implementations
@@ -116,15 +115,23 @@ Put the typed benchmark harness in `Bench.lean`. Reuse the generic helpers from 
 import NumLeanPerf.Benchmark.Common
 import NumLeanPerf.MyBenchmark.Implementations
 
-def myBenchmarkImplementations : List (String × (FloatArray → Float)) := [
-  ("lean.myBenchmark.version1", myBenchmark.version1),
-  ("lean.myBenchmark.version2", myBenchmark.version2)
+def myBenchmarkId := "my-benchmark"
+def myBenchmarkName := "My benchmark"
+def myBenchmarkDescription := "What this benchmark measures."
+
+def myBenchmarkImplementations : List (BenchmarkImplementation (FloatArray → Float)) := [
+  { id := "lean.myBenchmark.version1", language := "lean", name := "Lean version1", sourceFile := "NumLeanPerf/MyBenchmark/Implementations.lean", symbol := "myBenchmark.version1", run := myBenchmark.version1 },
+  { id := "lean.myBenchmark.version2", language := "lean", name := "Lean version2", sourceFile := "NumLeanPerf/MyBenchmark/Implementations.lean", symbol := "myBenchmark.version2", run := myBenchmark.version2 }
 ]
 
 def myBenchmarkImplementation? (name : String) : Option (FloatArray → Float) :=
-  (myBenchmarkImplementations.find? (fun entry => entry.fst == name)).map Prod.snd
+  (myBenchmarkImplementations.find? (fun entry => entry.id == name)).map (·.run)
 
 def main (args : List String) : IO UInt32 := do
+  if args[0]? == some "--metadata" then
+    IO.println (renderBenchmarkMetadata myBenchmarkId myBenchmarkName myBenchmarkDescription myBenchmarkImplementations)
+    return 0
+
   let some implName := args[0]?
     | IO.eprintln "usage: my-benchmark <implementation> <array-size> <samples> <warmups> <batch-size>"; return 2
   let some n := parseNatArg? args 1
@@ -144,67 +151,89 @@ def main (args : List String) : IO UInt32 := do
   return 0
 ```
 
-The small `Bench.lean` file is benchmark-specific because Lean implementation types differ between tests. The timing loop, batching, input generation, parsing, and output protocol are generic.
+The small `Bench.lean` file is benchmark-specific because Lean implementation types differ between tests. The timing loop, batching, input generation, parsing, metadata rendering, and output protocol are generic.
 
-Add a Lake executable stanza for the new harness:
+Add a Lake executable stanza for the new harness in `lakefile.lean`:
 
-```toml
-[[lean_exe]]
-name = "my-benchmark"
-root = "NumLeanPerf.MyBenchmark.Bench"
+```lean
+lean_exe «my-benchmark» where
+  root := `NumLeanPerf.MyBenchmark.Bench
 ```
 
-### C Implementation
+### C Implementation Via Lean FFI
 
-Put the C baseline in the same benchmark directory and include the shared helper header:
+Put the C baseline in the same benchmark directory. Lake automatically compiles `.c` files under `NumLeanPerf/` and links them into the Lean benchmark executables.
+
+In Lean, declare the C function as another implementation:
+
+```lean
+@[extern "lean_my_benchmark_loop"]
+opaque myBenchmark.c_loop (xs : @& FloatArray) : Float
+```
+
+For an implementation returning a `FloatArray`, use Lean ownership annotations to match the C calling convention. A borrowed input uses `@&`; an owned/mutable input omits it:
+
+```lean
+@[extern "lean_my_benchmark_axpy"]
+opaque myBenchmark.c_axpy (a : Float) (x : @& FloatArray) (y : FloatArray) : FloatArray
+```
+
+Then include it in the implementation list in `Bench.lean`:
+
+```lean
+def myBenchmarkImplementations : List (BenchmarkImplementation (FloatArray → Float)) := [
+  { id := "lean.myBenchmark.version1", language := "lean", name := "Lean version1", sourceFile := "NumLeanPerf/MyBenchmark/Implementations.lean", symbol := "myBenchmark.version1", run := myBenchmark.version1 },
+  { id := "c.myBenchmark.loop", language := "c", name := "C loop", sourceFile := "NumLeanPerf/MyBenchmark/my_benchmark.c", symbol := "lean_my_benchmark_loop", run := myBenchmark.c_loop }
+]
+```
+
+In C, include Lean's runtime header directly:
 
 ```c
-#include "NumLeanPerf/Benchmark/benchmark.h"
+#include <lean/lean.h>
 ```
 
-The C executable must accept the same protocol as Lean:
+For a borrowed `FloatArray` returning `Float`:
 
-```text
-<implementation> <array-size> <samples> <warmups> <batch-size>
-```
-
-For each measured sample, print one integer line: elapsed nanoseconds for the whole batch. `benchmarks/run.py` divides by `batchSize` and converts to seconds.
-
-Use `numleanperf_now_nanos`, `numleanperf_parse_size`, and `numleanperf_black_box_array` from `benchmark.h` to keep timing and optimization barriers consistent.
-
-### benchmark.json
-
-Describe the benchmark in `benchmark.json`:
-
-```json
-{
-  "id": "my-benchmark",
-  "name": "My benchmark",
-  "description": "What this benchmark measures.",
-  "leanExe": "my-benchmark",
-  "cSource": "NumLeanPerf/MyBenchmark/my_benchmark.c",
-  "cExeName": "my-benchmark-c",
-  "inputAxes": [
-    { "id": "arraySize", "name": "Array size", "unit": "elements" }
-  ],
-  "implementations": [
-    {
-      "id": "lean.myBenchmark.version1",
-      "language": "lean",
-      "name": "Lean version1",
-      "sourceFile": "NumLeanPerf/MyBenchmark/Implementations.lean",
-      "symbol": "myBenchmark.version1"
-    },
-    {
-      "id": "c.myBenchmark.loop",
-      "language": "c",
-      "name": "C loop",
-      "sourceFile": "NumLeanPerf/MyBenchmark/my_benchmark.c",
-      "symbol": "my_benchmark_loop"
-    }
-  ]
+```c
+double lean_my_benchmark_loop(b_lean_obj_arg xs) {
+  size_t n = lean_sarray_size(xs);
+  const double *xp = lean_float_array_cptr(xs);
+  double s = 0.0;
+  for (size_t i = 0; i < n; i++) {
+    s += xp[i];
+  }
+  return s;
 }
 ```
+
+For an operation that mutates or copies an owned `FloatArray` result:
+
+```c
+lean_obj_res lean_my_benchmark_axpy(double a, b_lean_obj_arg x, lean_obj_arg y) {
+  lean_obj_res r;
+  if (lean_is_exclusive(y)) {
+    r = y;
+  } else {
+    r = lean_copy_float_array(y);
+  }
+
+  size_t n = lean_sarray_size(r);
+  const double *xp = lean_float_array_cptr(x);
+  double *rp = lean_float_array_cptr(r);
+  for (size_t i = 0; i < n; i++) {
+    rp[i] = rp[i] + a * xp[i];
+  }
+  return r;
+}
+```
+
+Useful Lean runtime APIs from `lean.h`:
+
+- `lean_sarray_size(a)` gets the length of a `FloatArray`.
+- `lean_float_array_cptr(a)` gets the raw `double*` data pointer.
+- `lean_is_exclusive(a)` checks whether destructive update is safe.
+- `lean_copy_float_array(a)` copies a non-exclusive `FloatArray`.
 
 After that, the generic runner can discover it:
 
