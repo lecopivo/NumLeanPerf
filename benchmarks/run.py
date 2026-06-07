@@ -21,98 +21,22 @@ SIZE_PRESETS = {
 }
 
 
-BENCHMARKS = {
-    "float-array-sum": {
-        "name": "FloatArray sum",
-        "description": "Sum all elements of one FloatArray.",
-        "leanExe": "float-array-sum-bench",
-        "cSource": ROOT / "benchmarks" / "c" / "float_array_sum.c",
-        "cExe": BIN_DIR / "float-array-sum-c-bench",
-        "inputAxes": [{"id": "arraySize", "name": "Array size", "unit": "elements"}],
-        "implementations": [
-            {
-                "id": "lean.floatArraySum.nat_rec",
-                "language": "lean",
-                "name": "Lean nat_rec",
-                "sourceFile": "NumLeanPerf/FloatArraySum.lean",
-                "symbol": "floatArraySum.nat_rec",
-            },
-            {
-                "id": "lean.floatArraySum.usize_rec",
-                "language": "lean",
-                "name": "Lean usize_rec",
-                "sourceFile": "NumLeanPerf/FloatArraySum.lean",
-                "symbol": "floatArraySum.usize_rec",
-            },
-            {
-                "id": "lean.floatArraySum.foreach_loop",
-                "language": "lean",
-                "name": "Lean foreach_loop",
-                "sourceFile": "NumLeanPerf/FloatArraySum.lean",
-                "symbol": "floatArraySum.foreach_loop",
-            },
-            {
-                "id": "lean.floatArraySum.nat_loop",
-                "language": "lean",
-                "name": "Lean nat_loop",
-                "sourceFile": "NumLeanPerf/FloatArraySum.lean",
-                "symbol": "floatArraySum.nat_loop",
-            },
-            {
-                "id": "lean.floatArraySum.usize_loop_get!",
-                "language": "lean",
-                "name": "Lean usize_loop_get!",
-                "sourceFile": "NumLeanPerf/FloatArraySum.lean",
-                "symbol": "floatArraySum.usize_loop_get!",
-            },
-            {
-                "id": "c.floatArraySum.loop",
-                "language": "c",
-                "name": "C double loop",
-                "sourceFile": "benchmarks/c/float_array_sum.c",
-                "symbol": "float_array_sum_loop",
-            },
-        ],
-    },
-    "float-array-add": {
-        "name": "FloatArray add",
-        "description": "Elementwise add two FloatArrays and return a new array.",
-        "leanExe": "float-array-add-bench",
-        "cSource": ROOT / "benchmarks" / "c" / "float_array_add.c",
-        "cExe": BIN_DIR / "float-array-add-c-bench",
-        "inputAxes": [{"id": "arraySize", "name": "Array size", "unit": "elements"}],
-        "implementations": [
-            {
-                "id": "lean.floatArrayAdd.nat_loop_get!",
-                "language": "lean",
-                "name": "Lean nat_loop_get!",
-                "sourceFile": "NumLeanPerf/FloatArrayAdd.lean",
-                "symbol": "floatArrayAdd.nat_loop_get!",
-            },
-            {
-                "id": "lean.floatArrayAdd.usize_loop_get!",
-                "language": "lean",
-                "name": "Lean usize_loop_get!",
-                "sourceFile": "NumLeanPerf/FloatArrayAdd.lean",
-                "symbol": "floatArrayAdd.usize_loop_get!",
-            },
-            {
-                "id": "lean.floatArrayAdd.foreach_zip",
-                "language": "lean",
-                "name": "Lean foreach_zip",
-                "sourceFile": "NumLeanPerf/FloatArrayAdd.lean",
-                "symbol": "floatArrayAdd.foreach_zip",
-            },
-            {
-                "id": "c.floatArrayAdd.malloc_loop",
-                "language": "c",
-                "name": "C double malloc_loop",
-                "sourceFile": "benchmarks/c/float_array_add.c",
-                "symbol": "float_array_add_malloc_loop",
-            },
-        ],
-    },
-}
+def load_benchmarks():
+    benchmarks = {}
+    for config_path in sorted((ROOT / "NumLeanPerf").glob("*/benchmark.json")):
+        bench = json.loads(config_path.read_text())
+        bench_id = bench["id"]
+        bench["configFile"] = str(config_path.relative_to(ROOT))
+        if "cSource" in bench:
+            bench["cSource"] = ROOT / bench["cSource"]
+        if "cExeName" in bench:
+            bench["cExe"] = BIN_DIR / bench["cExeName"]
+        else:
+            bench["cExe"] = BIN_DIR / f"{bench_id}-c-bench"
+        benchmarks[bench_id] = bench
+    if not benchmarks:
+        raise SystemExit("no benchmark configs found under NumLeanPerf/*/benchmark.json")
+    return benchmarks
 
 
 def run(cmd, *, check=True):
@@ -244,12 +168,13 @@ def implementation_code(impl):
     return source
 
 
-def build_targets(selected):
+def build_targets(benchmarks, selected):
     BIN_DIR.mkdir(parents=True, exist_ok=True)
     for bench_id in selected:
-        bench = BENCHMARKS[bench_id]
+        bench = benchmarks[bench_id]
         run(["lake", "build", bench["leanExe"]])
-        run(["cc", *CFLAGS, "-std=c11", str(bench["cSource"]), "-lm", "-o", str(bench["cExe"])])
+        if "cSource" in bench:
+            run(["cc", *CFLAGS, "-std=c11", "-I", str(ROOT), str(bench["cSource"]), "-lm", "-o", str(bench["cExe"])])
 
 
 def executable_for(bench, impl):
@@ -290,12 +215,12 @@ def safe_timestamp(value):
     return re.sub(r"[^0-9A-Za-z-]", "", value.replace(":", ""))
 
 
-def run_benchmarks(selected, sizes, samples, warmups):
+def run_benchmarks(benchmarks, selected, sizes, samples, warmups):
     results = []
     implementation_records = []
 
     for bench_id in selected:
-        bench = BENCHMARKS[bench_id]
+        bench = benchmarks[bench_id]
         for impl in bench["implementations"]:
             impl_record = dict(impl)
             impl_record["benchmarkId"] = bench_id
@@ -343,8 +268,9 @@ def write_index(entry):
 
 
 def main():
+    benchmarks = load_benchmarks()
     parser = argparse.ArgumentParser(description="Run NumLeanPerf benchmarks and write versioned JSON results.")
-    parser.add_argument("--benchmark", action="append", choices=sorted(BENCHMARKS), help="Benchmark id to run. Defaults to all.")
+    parser.add_argument("--benchmark", action="append", choices=sorted(benchmarks), help="Benchmark id to run. Defaults to all.")
     parser.add_argument("--size-preset", choices=sorted(SIZE_PRESETS), default="default")
     parser.add_argument("--sizes", nargs="+", type=int, help="Array sizes. Overrides --size-preset.")
     parser.add_argument("--samples", type=int, default=20)
@@ -352,19 +278,26 @@ def main():
     parser.add_argument("--no-build", action="store_true", help="Skip Lean and C builds.")
     args = parser.parse_args()
 
-    selected = args.benchmark or sorted(BENCHMARKS)
+    selected = args.benchmark or sorted(benchmarks)
+    sizes = args.sizes or SIZE_PRESETS[args.size_preset]
+    if args.samples <= 0:
+        raise SystemExit("--samples must be positive")
+    if args.warmups < 0:
+        raise SystemExit("--warmups must be non-negative")
+    if any(size <= 0 for size in sizes):
+        raise SystemExit("all sizes must be positive")
+
     command = " ".join(["benchmarks/run.py", *os.sys.argv[1:]])
     if not args.no_build:
-        build_targets(selected)
+        build_targets(benchmarks, selected)
 
     created_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     run_id = safe_timestamp(created_at)
-    sizes = args.sizes or SIZE_PRESETS[args.size_preset]
-    implementation_records, results = run_benchmarks(selected, sizes, args.samples, args.warmups)
+    implementation_records, results = run_benchmarks(benchmarks, selected, sizes, args.samples, args.warmups)
 
     benchmark_records = []
     for bench_id in selected:
-        bench = BENCHMARKS[bench_id]
+        bench = benchmarks[bench_id]
         benchmark_records.append(
             {
                 "id": bench_id,

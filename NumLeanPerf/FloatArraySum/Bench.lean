@@ -1,13 +1,15 @@
-import NumLeanPerf.Bench.FloatArrayCommon
+import NumLeanPerf.Benchmark.Common
+
+def sumImplementations : List (String × (FloatArray → Float)) := [
+  ("lean.floatArraySum.nat_rec", floatArraySum.nat_rec),
+  ("lean.floatArraySum.usize_rec", floatArraySum.usize_rec),
+  ("lean.floatArraySum.foreach_loop", floatArraySum.foreach_loop),
+  ("lean.floatArraySum.nat_loop", floatArraySum.nat_loop),
+  ("lean.floatArraySum.usize_loop_get!", floatArraySum.usize_loop_get!)
+]
 
 def sumImplementation? (name : String) : Option (FloatArray → Float) :=
-  match name with
-  | "lean.floatArraySum.nat_rec" => some floatArraySum.nat_rec
-  | "lean.floatArraySum.usize_rec" => some floatArraySum.usize_rec
-  | "lean.floatArraySum.foreach_loop" => some floatArraySum.foreach_loop
-  | "lean.floatArraySum.nat_loop" => some floatArraySum.nat_loop
-  | "lean.floatArraySum.usize_loop_get!" => some floatArraySum.usize_loop_get!
-  | _ => none
+  (sumImplementations.find? (fun entry => entry.fst == name)).map Prod.snd
 
 def main (args : List String) : IO UInt32 := do
   let some implName := args[0]?

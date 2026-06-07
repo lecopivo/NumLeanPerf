@@ -11,8 +11,8 @@ root = "Main"
 
 [[lean_exe]]
 name = "float-array-sum-bench"
-root = "NumLeanPerf.Bench.FloatArraySumBench"
+root = "NumLeanPerf.FloatArraySum.Bench"
 
 [[lean_exe]]
 name = "float-array-add-bench"
-root = "NumLeanPerf.Bench.FloatArrayAddBench"
+root = "NumLeanPerf.FloatArrayAdd.Bench"

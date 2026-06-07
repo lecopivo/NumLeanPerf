@@ -1,0 +1,55 @@
+{
+  "id": "float-array-sum",
+  "name": "FloatArray sum",
+  "description": "Sum all elements of one FloatArray.",
+  "leanExe": "float-array-sum-bench",
+  "cSource": "NumLeanPerf/FloatArraySum/float_array_sum.c",
+  "cExeName": "float-array-sum-c-bench",
+  "inputAxes": [
+    { "id": "arraySize", "name": "Array size", "unit": "elements" }
+  ],
+  "implementations": [
+    {
+      "id": "lean.floatArraySum.nat_rec",
+      "language": "lean",
+      "name": "Lean nat_rec",
+      "sourceFile": "NumLeanPerf/FloatArraySum/Implementations.lean",
+      "symbol": "floatArraySum.nat_rec"
+    },
+    {
+      "id": "lean.floatArraySum.usize_rec",
+      "language": "lean",
+      "name": "Lean usize_rec",
+      "sourceFile": "NumLeanPerf/FloatArraySum/Implementations.lean",
+      "symbol": "floatArraySum.usize_rec"
+    },
+    {
+      "id": "lean.floatArraySum.foreach_loop",
+      "language": "lean",
+      "name": "Lean foreach_loop",
+      "sourceFile": "NumLeanPerf/FloatArraySum/Implementations.lean",
+      "symbol": "floatArraySum.foreach_loop"
+    },
+    {
+      "id": "lean.floatArraySum.nat_loop",
+      "language": "lean",
+      "name": "Lean nat_loop",
+      "sourceFile": "NumLeanPerf/FloatArraySum/Implementations.lean",
+      "symbol": "floatArraySum.nat_loop"
+    },
+    {
+      "id": "lean.floatArraySum.usize_loop_get!",
+      "language": "lean",
+      "name": "Lean usize_loop_get!",
+      "sourceFile": "NumLeanPerf/FloatArraySum/Implementations.lean",
+      "symbol": "floatArraySum.usize_loop_get!"
+    },
+    {
+      "id": "c.floatArraySum.loop",
+      "language": "c",
+      "name": "C double loop",
+      "sourceFile": "NumLeanPerf/FloatArraySum/float_array_sum.c",
+      "symbol": "float_array_sum_loop"
+    }
+  ]
+}

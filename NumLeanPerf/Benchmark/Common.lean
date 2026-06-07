@@ -1,4 +1,4 @@
-import NumLeanPerf.FloatArraySum
+import NumLeanPerf.FloatArraySum.Implementations
 
 def mkFloatArray (n : Nat) (offset : Float := 0.0) : FloatArray := Id.run do
   let mut xs := FloatArray.empty
@@ -18,6 +18,14 @@ def inputPoolSize (samples warmups : Nat) : Nat :=
 
 def sumFloatArray (xs : FloatArray) : Float :=
   floatArraySum.foreach_loop xs
+
+def fingerprintFloatArray (xs : FloatArray) : Float :=
+  if h : 0 < xs.size then
+    let last := xs.size - 1
+    let mid := xs.size / 2
+    xs[0] + xs[mid]! + xs[last]!
+  else
+    0.0
 
 def runBatch (batchSize startIndex : Nat) (runOnce : Nat → IO Float) : IO Float := do
   let mut checksum := 0.0

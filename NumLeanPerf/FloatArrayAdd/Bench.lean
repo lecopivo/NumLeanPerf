@@ -1,12 +1,14 @@
-import NumLeanPerf.Bench.FloatArrayCommon
-import NumLeanPerf.FloatArrayAdd
+import NumLeanPerf.Benchmark.Common
+import NumLeanPerf.FloatArrayAdd.Implementations
+
+def addImplementations : List (String × (FloatArray → FloatArray → FloatArray)) := [
+  ("lean.floatArrayAdd.nat_loop_get!", floatArrayAdd.nat_loop_get!),
+  ("lean.floatArrayAdd.usize_loop_get!", floatArrayAdd.usize_loop_get!),
+  ("lean.floatArrayAdd.foreach_zip", floatArrayAdd.foreach_zip)
+]
 
 def addImplementation? (name : String) : Option (FloatArray → FloatArray → FloatArray) :=
-  match name with
-  | "lean.floatArrayAdd.nat_loop_get!" => some floatArrayAdd.nat_loop_get!
-  | "lean.floatArrayAdd.usize_loop_get!" => some floatArrayAdd.usize_loop_get!
-  | "lean.floatArrayAdd.foreach_zip" => some floatArrayAdd.foreach_zip
-  | _ => none
+  (addImplementations.find? (fun entry => entry.fst == name)).map Prod.snd
 
 def main (args : List String) : IO UInt32 := do
   let some implName := args[0]?
@@ -25,5 +27,5 @@ def main (args : List String) : IO UInt32 := do
   let poolSize := inputPoolSize samples warmups
   let xsInputs := mkFloatArrayInputs poolSize n
   let ysInputs := mkFloatArrayInputs poolSize n 1.0
-  printTimingLines samples warmups batchSize (fun i => pure (sumFloatArray (impl xsInputs[i % poolSize]! ysInputs[i % poolSize]!)))
+  printTimingLines samples warmups batchSize (fun i => pure (fingerprintFloatArray (impl xsInputs[i % poolSize]! ysInputs[i % poolSize]!)))
   return 0

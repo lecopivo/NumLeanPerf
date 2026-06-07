@@ -5,6 +5,7 @@ const state = {
   currentDocument: null,
   chart: null,
   tableSort: { key: "mean", direction: "asc" },
+  pendingSize: null,
 };
 
 const runSelect = document.querySelector("#runSelect");
@@ -59,6 +60,34 @@ function benchmarkName(id) {
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function readUrlState() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    benchmark: params.get("benchmark"),
+    run: params.get("run"),
+    size: params.get("size"),
+    sort: params.get("sort"),
+    dir: params.get("dir"),
+  };
+}
+
+function selectedRunEntry() {
+  return (state.index?.runs || []).find((run) => run.file === runSelect.value) || null;
+}
+
+function updateUrl() {
+  if (!state.index || !benchmarkSelect.value || !runSelect.value) return;
+  const params = new URLSearchParams();
+  const run = selectedRunEntry();
+  params.set("benchmark", benchmarkSelect.value);
+  params.set("run", run?.runId || runSelect.value);
+  if (sizeSelect.value) params.set("size", sizeSelect.value);
+  params.set("sort", state.tableSort.key);
+  params.set("dir", state.tableSort.direction);
+  const next = `${window.location.pathname}?${params.toString()}`;
+  window.history.replaceState(null, "", next);
 }
 
 function updateImplementationPanel(document, implId, result) {
@@ -147,6 +176,7 @@ function updateChart(document, benchmarkId) {
 
 function updateSizeOptions(document, benchmarkId) {
   const previous = Number(sizeSelect.value);
+  const pending = state.pendingSize === null ? null : Number(state.pendingSize);
   const sizes = availableSizes(document, benchmarkId);
   sizeSelect.innerHTML = "";
   for (const size of sizes) {
@@ -155,7 +185,10 @@ function updateSizeOptions(document, benchmarkId) {
     option.textContent = String(size);
     sizeSelect.appendChild(option);
   }
-  if (sizes.includes(previous)) {
+  if (pending !== null && sizes.includes(pending)) {
+    sizeSelect.value = String(pending);
+    state.pendingSize = null;
+  } else if (sizes.includes(previous)) {
     sizeSelect.value = String(previous);
   } else if (sizes.length > 0) {
     sizeSelect.value = String(sizes[sizes.length - 1]);
@@ -290,6 +323,7 @@ function renderCurrent() {
   updateEnvironment(document);
   const firstImpl = implementationsFor(document, benchmarkId)[0];
   if (firstImpl) updateImplementationPanel(document, firstImpl.id);
+  updateUrl();
 }
 
 async function loadRun(fileName) {
@@ -301,9 +335,25 @@ async function loadRun(fileName) {
 }
 
 async function initFromIndex() {
+  const urlState = readUrlState();
+  if (urlState.sort) state.tableSort.key = urlState.sort;
+  if (urlState.dir === "asc" || urlState.dir === "desc") state.tableSort.direction = urlState.dir;
+  state.pendingSize = urlState.size;
+
   state.index = await loadJson(indexUrl);
   updateBenchmarkOptionsFromIndex();
+  if (urlState.benchmark && [...benchmarkSelect.options].some((option) => option.value === urlState.benchmark)) {
+    benchmarkSelect.value = urlState.benchmark;
+  }
   updateRunOptionsForBenchmark(benchmarkSelect.value);
+  if (urlState.run) {
+    const match = (state.index.runs || []).find((run) =>
+      run.file === urlState.run || run.runId === urlState.run || run.createdAt === urlState.run
+    );
+    if (match && [...runSelect.options].some((option) => option.value === match.file)) {
+      runSelect.value = match.file;
+    }
+  }
   if (runSelect.value) {
     await loadRun(runSelect.value);
   }
