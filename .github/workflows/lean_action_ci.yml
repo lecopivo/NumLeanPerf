@@ -1,0 +1,57 @@
+name: Build and Publish Site
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: leanprover/lean-action@v1
+        with:
+          build: false
+      - name: Build Lean targets
+        run: lake build NumLeanPerf numleanperf float-array-sum-bench float-array-add-bench
+      - name: Check benchmark runner syntax
+        run: python3 -m py_compile benchmarks/run.py
+      - name: Check website JavaScript syntax
+        run: node --check benchmarks/site/app.js
+
+  deploy-pages:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/configure-pages@v5
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p public/benchmarks
+          cp -R benchmarks/site public/benchmarks/site
+          cp -R benchmarks/results public/benchmarks/results
+          touch public/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - id: deployment
+        uses: actions/deploy-pages@v4

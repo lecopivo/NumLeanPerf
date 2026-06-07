@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NumLeanPerf Benchmarks</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <div>
+        <p class="eyebrow">NumLeanPerf</p>
+        <h1>Benchmark Results</h1>
+      </div>
+      <div class="controls">
+        <label>
+          Benchmark
+          <select id="benchmarkSelect"></select>
+        </label>
+        <label>
+          Date
+          <select id="runSelect"></select>
+        </label>
+        <label class="filePicker">
+          Load JSON
+          <input id="fileInput" type="file" accept="application/json,.json">
+        </label>
+      </div>
+    </header>
+
+    <main>
+      <section class="chartCard">
+        <canvas id="chart"></canvas>
+      </section>
+
+      <aside class="detailsCard">
+        <h2 id="implementationTitle">Hover an implementation</h2>
+        <p id="implementationMeta" class="muted">Code and timing details appear here.</p>
+        <pre><code id="implementationCode"></code></pre>
+      </aside>
+
+      <section class="tableCard">
+        <div class="sectionHeader">
+          <h2>Measurements</h2>
+          <label>
+            Size
+            <select id="sizeSelect"></select>
+          </label>
+        </div>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th><button type="button" data-sort="implementation">Implementation</button></th>
+                <th><button type="button" data-sort="arraySize">Size</button></th>
+                <th><button type="button" data-sort="mean">Mean</button></th>
+                <th><button type="button" data-sort="stddev">Stddev</button></th>
+                <th><button type="button" data-sort="min">Min</button></th>
+                <th><button type="button" data-sort="max">Max</button></th>
+                <th><button type="button" data-sort="samples">Samples</button></th>
+                <th><button type="button" data-sort="batchSize">Batch</button></th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="environmentCard">
+        <h2>Environment</h2>
+        <dl id="environmentList"></dl>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
