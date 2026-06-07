@@ -274,3 +274,5 @@ https://lecopivo.github.io/NumLeanPerf/benchmarks/site/?benchmark=float-array-su
 ```
 
 The graph can show error bars for `mean ± stddev`. Toggle them with the **Error bars** checkbox. The checkbox state is also stored in the URL as `errors=1` or `errors=0`.
+
+Click a graph legend item or measurement table row to use that implementation as a relative baseline. The graph then displays every implementation as a multiple of the baseline at the same array size. Click the same implementation again or **Clear baseline** to return to absolute time. The selected baseline is stored in the URL as `baseline=<implementation-id>`.

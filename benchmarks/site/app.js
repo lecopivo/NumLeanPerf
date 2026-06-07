@@ -6,12 +6,16 @@ const state = {
   chart: null,
   tableSort: { key: "mean", direction: "asc" },
   pendingSize: null,
+  baselineImplementationId: null,
 };
 
 const runSelect = document.querySelector("#runSelect");
 const benchmarkSelect = document.querySelector("#benchmarkSelect");
 const sizeSelect = document.querySelector("#sizeSelect");
 const errorBarsToggle = document.querySelector("#errorBarsToggle");
+const baselineStatus = document.querySelector("#baselineStatus");
+const baselineSelect = document.querySelector("#baselineSelect");
+const clearBaselineButton = document.querySelector("#clearBaselineButton");
 const fileInput = document.querySelector("#fileInput");
 const implementationTitle = document.querySelector("#implementationTitle");
 const implementationMeta = document.querySelector("#implementationMeta");
@@ -72,6 +76,7 @@ function readUrlState() {
     sort: params.get("sort"),
     dir: params.get("dir"),
     errors: params.get("errors"),
+    baseline: params.get("baseline"),
   };
 }
 
@@ -89,6 +94,7 @@ function updateUrl() {
   params.set("sort", state.tableSort.key);
   params.set("dir", state.tableSort.direction);
   params.set("errors", errorBarsToggle.checked ? "1" : "0");
+  if (state.baselineImplementationId) params.set("baseline", state.baselineImplementationId);
   const next = `${window.location.pathname}?${params.toString()}`;
   window.history.replaceState(null, "", next);
 }
@@ -112,8 +118,8 @@ const errorBarsPlugin = {
         if (!result || !Number.isFinite(result.stddev) || result.stddev <= 0) return;
         const element = meta.data[pointIndex];
         if (!element) return;
-        const low = Math.max(result.mean - result.stddev, yScale.min || 0);
-        const high = result.mean + result.stddev;
+        const low = Math.max(point.yLow ?? result.mean - result.stddev, yScale.min || 0);
+        const high = point.yHigh ?? result.mean + result.stddev;
         if (high <= 0) return;
         const x = element.x;
         const yLow = yScale.getPixelForValue(low);
@@ -143,10 +149,66 @@ function updateImplementationPanel(document, implId, result) {
   implementationCode.textContent = impl.code || "Source code was not embedded in this result file.";
 }
 
+function resultKey(result) {
+  return String(result.inputs.arraySize);
+}
+
+function baselineBySize(allResults) {
+  const baselineId = state.baselineImplementationId;
+  if (!baselineId) return new Map();
+  return new Map(
+    allResults
+      .filter((result) => result.implementationId === baselineId && result.mean > 0)
+      .map((result) => [resultKey(result), result])
+  );
+}
+
+function isRelativeMode() {
+  return Boolean(state.baselineImplementationId);
+}
+
+function formatMultiple(value) {
+  if (!Number.isFinite(value)) return "";
+  return `${value.toFixed(value < 10 ? 2 : 1)}x`;
+}
+
+function setBaseline(implId) {
+  state.baselineImplementationId = implId || null;
+  renderCurrent();
+}
+
+function updateBaselineStatus(document) {
+  const impl = state.baselineImplementationId ? implementationById(document).get(state.baselineImplementationId) : null;
+  baselineStatus.textContent = impl ? `Baseline: ${impl.name}` : "Absolute time";
+  baselineSelect.value = impl?.id || "";
+  clearBaselineButton.hidden = !impl;
+}
+
+function updateBaselineOptions(document, benchmarkId) {
+  const current = state.baselineImplementationId;
+  baselineSelect.innerHTML = "";
+
+  const none = window.document.createElement("option");
+  none.value = "";
+  none.textContent = "Select baseline";
+  baselineSelect.appendChild(none);
+
+  for (const impl of implementationsFor(document, benchmarkId)) {
+    const option = window.document.createElement("option");
+    option.value = impl.id;
+    option.textContent = impl.name;
+    baselineSelect.appendChild(option);
+  }
+
+  baselineSelect.value = current || "";
+}
+
 function updateChart(document, benchmarkId) {
   const canvas = window.document.querySelector("#chart");
   const impls = implementationsFor(document, benchmarkId);
   const allResults = resultsFor(document, benchmarkId);
+  const baselineResults = baselineBySize(allResults);
+  const relativeMode = isRelativeMode();
   const grouped = new Map(impls.map((impl) => [impl.id, []]));
   for (const result of allResults) {
     grouped.get(result.implementationId)?.push(result);
@@ -156,16 +218,31 @@ function updateChart(document, benchmarkId) {
     const data = (grouped.get(impl.id) || [])
       .slice()
       .sort((a, b) => a.inputs.arraySize - b.inputs.arraySize)
-      .map((result) => ({ x: result.inputs.arraySize, y: result.mean, result }));
+      .map((result) => {
+        const baseline = baselineResults.get(resultKey(result));
+        const y = baseline ? result.mean / baseline.mean : result.mean;
+        const stddev = baseline ? result.stddev / baseline.mean : result.stddev;
+        return {
+          x: result.inputs.arraySize,
+          y,
+          yLow: Math.max(y - stddev, 0),
+          yHigh: y + stddev,
+          result,
+          baseline,
+        };
+      })
+      .filter((point) => Number.isFinite(point.y) && point.y > 0);
     return {
-      label: impl.name,
+      label: state.baselineImplementationId === impl.id ? `${impl.name} (baseline)` : impl.name,
+      implementationId: impl.id,
+      hidden: false,
       data,
       borderColor: color(index),
       backgroundColor: color(index),
       tension: 0.18,
     };
   });
-  const yScaleType = allResults.some((result) => result.mean <= 0) ? "linear" : "logarithmic";
+  const yScaleType = relativeMode ? "linear" : (allResults.some((result) => result.mean <= 0) ? "linear" : "logarithmic");
 
   if (state.chart) {
     state.chart.destroy();
@@ -197,9 +274,9 @@ function updateChart(document, benchmarkId) {
         },
         y: {
           type: yScaleType,
-          title: { display: true, text: "Mean time" },
+          title: { display: true, text: relativeMode ? "Relative time vs baseline" : "Mean time" },
           grid: { color: "#30384a" },
-          ticks: { color: "#99a4b8", callback: (value) => formatSeconds(Number(value)) },
+          ticks: { color: "#99a4b8", callback: (value) => relativeMode ? formatMultiple(Number(value)) : formatSeconds(Number(value)) },
         },
       },
       plugins: {
@@ -209,7 +286,13 @@ function updateChart(document, benchmarkId) {
         },
         tooltip: {
           callbacks: {
-            label: (context) => `${context.dataset.label}: ${formatSeconds(context.raw.y)}`,
+            label: (context) => {
+              const point = context.raw;
+              if (relativeMode) {
+                return `${context.dataset.label}: ${formatMultiple(point.y)} (${formatSeconds(point.result.mean)})`;
+              }
+              return `${context.dataset.label}: ${formatSeconds(point.y)}`;
+            },
           },
         },
       },
@@ -285,6 +368,8 @@ function updateTable(document, benchmarkId) {
   for (const result of rows) {
     const impl = impls.get(result.implementationId);
     const row = window.document.createElement("tr");
+    row.classList.toggle("baselineRow", result.implementationId === state.baselineImplementationId);
+    row.title = "Click to use this implementation as the relative baseline";
     row.innerHTML = `
       <td>${impl?.name || result.implementationId}</td>
       <td>${result.inputs.arraySize}</td>
@@ -296,6 +381,7 @@ function updateTable(document, benchmarkId) {
       <td>${result.batchSize || 1}</td>
     `;
     row.addEventListener("mouseenter", () => updateImplementationPanel(document, result.implementationId, result));
+    row.addEventListener("click", () => setBaseline(result.implementationId));
     resultsBody.appendChild(row);
   }
 }
@@ -369,10 +455,15 @@ function renderCurrent() {
   const document = state.currentDocument;
   if (!document) return;
   const benchmarkId = benchmarkSelect.value || document.benchmarks[0]?.id;
+  if (state.baselineImplementationId && !implementationsFor(document, benchmarkId).some((impl) => impl.id === state.baselineImplementationId)) {
+    state.baselineImplementationId = null;
+  }
+  updateBaselineOptions(document, benchmarkId);
   updateChart(document, benchmarkId);
   updateSizeOptions(document, benchmarkId);
   updateTable(document, benchmarkId);
   updateEnvironment(document);
+  updateBaselineStatus(document);
   const firstImpl = implementationsFor(document, benchmarkId)[0];
   if (firstImpl) updateImplementationPanel(document, firstImpl.id);
   updateUrl();
@@ -391,6 +482,7 @@ async function initFromIndex() {
   if (urlState.sort) state.tableSort.key = urlState.sort;
   if (urlState.dir === "asc" || urlState.dir === "desc") state.tableSort.direction = urlState.dir;
   if (urlState.errors === "0") errorBarsToggle.checked = false;
+  state.baselineImplementationId = urlState.baseline;
   state.pendingSize = urlState.size;
 
   state.index = await loadJson(indexUrl);
@@ -417,6 +509,11 @@ sizeSelect.addEventListener("change", renderCurrent);
 errorBarsToggle.addEventListener("change", () => {
   state.chart?.draw();
   updateUrl();
+});
+baselineSelect.addEventListener("change", () => setBaseline(baselineSelect.value));
+clearBaselineButton.addEventListener("click", () => {
+  state.baselineImplementationId = null;
+  renderCurrent();
 });
 for (const button of window.document.querySelectorAll("[data-sort]")) {
   button.addEventListener("click", () => {

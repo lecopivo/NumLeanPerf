@@ -88,6 +88,38 @@ select, input[type="file"] {
   accent-color: var(--accent);
 }
 
+.chartControls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.chartControls label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chartControls select {
+  min-width: 14rem;
+}
+
+#clearBaselineButton {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+  padding: 0.45rem 0.75rem;
+}
+
+#clearBaselineButton:hover {
+  border-color: var(--accent);
+}
+
 th button {
   border: 0;
   background: transparent;
@@ -194,6 +226,15 @@ th, td {
 
 th:first-child, td:first-child {
   text-align: left;
+}
+
+tbody tr {
+  cursor: pointer;
+}
+
+tbody tr:hover,
+tbody tr.baselineRow {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 dl {
