@@ -7,6 +7,7 @@
   --muted: #99a4b8;
   --accent: #83d4ff;
   --line: #30384a;
+  --chart-height: 32rem;
 }
 
 * {
@@ -77,6 +78,16 @@ select, input[type="file"] {
   padding: 0.7rem 0.8rem;
 }
 
+.checkboxLabel {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.checkboxLabel input {
+  accent-color: var(--accent);
+}
+
 th button {
   border: 0;
   background: transparent;
@@ -106,8 +117,20 @@ main {
 }
 
 .chartCard {
-  min-height: 32rem;
   padding: 1rem;
+  height: calc(var(--chart-height) + 4rem);
+}
+
+.chartWrap {
+  position: relative;
+  height: var(--chart-height);
+  min-height: var(--chart-height);
+}
+
+.chartWrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .detailsCard, .tableCard, .environmentCard {
@@ -199,5 +222,9 @@ dd {
 
   .controls {
     justify-content: stretch;
+  }
+
+  :root {
+    --chart-height: 24rem;
   }
 }

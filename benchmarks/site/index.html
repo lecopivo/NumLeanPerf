@@ -31,7 +31,16 @@
 
     <main>
       <section class="chartCard">
-        <canvas id="chart"></canvas>
+        <div class="sectionHeader">
+          <h2>Mean Time</h2>
+          <label class="checkboxLabel">
+            <input id="errorBarsToggle" type="checkbox" checked>
+            Error bars
+          </label>
+        </div>
+        <div class="chartWrap">
+          <canvas id="chart"></canvas>
+        </div>
       </section>
 
       <aside class="detailsCard">

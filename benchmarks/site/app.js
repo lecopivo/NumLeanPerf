@@ -11,6 +11,7 @@ const state = {
 const runSelect = document.querySelector("#runSelect");
 const benchmarkSelect = document.querySelector("#benchmarkSelect");
 const sizeSelect = document.querySelector("#sizeSelect");
+const errorBarsToggle = document.querySelector("#errorBarsToggle");
 const fileInput = document.querySelector("#fileInput");
 const implementationTitle = document.querySelector("#implementationTitle");
 const implementationMeta = document.querySelector("#implementationMeta");
@@ -70,6 +71,7 @@ function readUrlState() {
     size: params.get("size"),
     sort: params.get("sort"),
     dir: params.get("dir"),
+    errors: params.get("errors"),
   };
 }
 
@@ -86,9 +88,49 @@ function updateUrl() {
   if (sizeSelect.value) params.set("size", sizeSelect.value);
   params.set("sort", state.tableSort.key);
   params.set("dir", state.tableSort.direction);
+  params.set("errors", errorBarsToggle.checked ? "1" : "0");
   const next = `${window.location.pathname}?${params.toString()}`;
   window.history.replaceState(null, "", next);
 }
+
+const errorBarsPlugin = {
+  id: "numleanperfErrorBars",
+  afterDatasetsDraw(chart) {
+    if (!errorBarsToggle.checked) return;
+    const yScale = chart.scales.y;
+    const capWidth = 8;
+    const ctx = chart.ctx;
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = chart.getDatasetMeta(datasetIndex);
+      if (meta.hidden) return;
+      ctx.save();
+      ctx.strokeStyle = dataset.borderColor;
+      ctx.globalAlpha = 0.65;
+      ctx.lineWidth = 1;
+      dataset.data.forEach((point, pointIndex) => {
+        const result = point.result;
+        if (!result || !Number.isFinite(result.stddev) || result.stddev <= 0) return;
+        const element = meta.data[pointIndex];
+        if (!element) return;
+        const low = Math.max(result.mean - result.stddev, yScale.min || 0);
+        const high = result.mean + result.stddev;
+        if (high <= 0) return;
+        const x = element.x;
+        const yLow = yScale.getPixelForValue(low);
+        const yHigh = yScale.getPixelForValue(high);
+        ctx.beginPath();
+        ctx.moveTo(x, yHigh);
+        ctx.lineTo(x, yLow);
+        ctx.moveTo(x - capWidth / 2, yHigh);
+        ctx.lineTo(x + capWidth / 2, yHigh);
+        ctx.moveTo(x - capWidth / 2, yLow);
+        ctx.lineTo(x + capWidth / 2, yLow);
+        ctx.stroke();
+      });
+      ctx.restore();
+    });
+  },
+};
 
 function updateImplementationPanel(document, implId, result) {
   const impl = implementationById(document).get(implId);
@@ -132,6 +174,7 @@ function updateChart(document, benchmarkId) {
   state.chart = new Chart(canvas, {
     type: "line",
     data: { datasets },
+    plugins: [errorBarsPlugin],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -172,6 +215,7 @@ function updateChart(document, benchmarkId) {
       },
     },
   });
+  requestAnimationFrame(() => state.chart?.resize());
 }
 
 function updateSizeOptions(document, benchmarkId) {
@@ -338,6 +382,7 @@ async function initFromIndex() {
   const urlState = readUrlState();
   if (urlState.sort) state.tableSort.key = urlState.sort;
   if (urlState.dir === "asc" || urlState.dir === "desc") state.tableSort.direction = urlState.dir;
+  if (urlState.errors === "0") errorBarsToggle.checked = false;
   state.pendingSize = urlState.size;
 
   state.index = await loadJson(indexUrl);
@@ -361,6 +406,10 @@ async function initFromIndex() {
 
 runSelect.addEventListener("change", () => loadRun(runSelect.value));
 sizeSelect.addEventListener("change", renderCurrent);
+errorBarsToggle.addEventListener("change", () => {
+  state.chart?.draw();
+  updateUrl();
+});
 for (const button of window.document.querySelectorAll("[data-sort]")) {
   button.addEventListener("click", () => {
     const key = button.dataset.sort;

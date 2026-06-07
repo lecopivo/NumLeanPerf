@@ -241,5 +241,7 @@ https://lecopivo.github.io/NumLeanPerf/benchmarks/site/
 The viewer stores the selected benchmark, run/date, size, and table sort in the URL. You can share a specific view by copying the browser URL, for example:
 
 ```text
-https://lecopivo.github.io/NumLeanPerf/benchmarks/site/?benchmark=float-array-sum&run=2026-06-07T194105Z&size=1000&sort=mean&dir=asc
+https://lecopivo.github.io/NumLeanPerf/benchmarks/site/?benchmark=float-array-sum&run=2026-06-07T194105Z&size=1000&sort=mean&dir=asc&errors=1
 ```
+
+The graph can show error bars for `mean ± stddev`. Toggle them with the **Error bars** checkbox. The checkbox state is also stored in the URL as `errors=1` or `errors=0`.
