@@ -2,6 +2,17 @@
   "schemaVersion": 1,
   "runs": [
     {
+      "runId": "2026-06-07T210936Z",
+      "createdAt": "2026-06-07T21:09:36Z",
+      "file": "2026-06-07T210936Z-all.json",
+      "benchmarks": [
+        "float-array-add",
+        "float-array-axpy",
+        "float-array-sum"
+      ],
+      "schemaVersion": 1
+    },
+    {
       "runId": "2026-06-07T201840Z",
       "createdAt": "2026-06-07T20:18:40Z",
       "file": "2026-06-07T201840Z-all.json",
