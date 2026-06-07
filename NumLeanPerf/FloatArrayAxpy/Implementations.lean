@@ -1,0 +1,23 @@
+def floatArrayAxpy.loop_uset (a : Float) (x y : FloatArray) : FloatArray := Id.run do
+  let mut y := y
+  for i in 0...(y.size.toUSize) do
+    let yi := y[i]!
+    let xi := x[i]!
+    y := y.uset i (yi + a * xi) sorry
+  return y
+
+def floatArrayAxpy.loop_fset (a : Float) (x y : FloatArray) : FloatArray := Id.run do
+  let mut y := y
+  for i in 0...(y.size.toUSize) do
+    let yi := y[i]!
+    let xi := x[i]!
+    y := y.set i.toNat (yi + a * xi) sorry
+  return y
+
+def floatArrayAxpy.loop_set (a : Float) (x y : FloatArray) : FloatArray := Id.run do
+  let mut y := y
+  for i in 0...(y.size.toUSize) do
+    let yi := y[i]!
+    let xi := x[i]!
+    y := y.set! i.toNat (yi + a * xi)
+  return y

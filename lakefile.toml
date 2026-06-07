@@ -16,3 +16,7 @@ root = "NumLeanPerf.FloatArraySum.Bench"
 [[lean_exe]]
 name = "float-array-add-bench"
 root = "NumLeanPerf.FloatArrayAdd.Bench"
+
+[[lean_exe]]
+name = "float-array-axpy-bench"
+root = "NumLeanPerf.FloatArrayAxpy.Bench"

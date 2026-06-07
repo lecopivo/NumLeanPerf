@@ -1,0 +1,41 @@
+{
+  "id": "float-array-axpy",
+  "name": "FloatArray axpy",
+  "description": "BLAS operation axpy, `y <- y + a * x`",
+  "leanExe": "float-array-axpy-bench",
+  "cSource": "NumLeanPerf/FloatArrayAxpy/float_array_axpy.c",
+  "cExeName": "float-array-axpy-c-bench",
+  "inputAxes": [
+    { "id": "arraySize", "name": "Array size", "unit": "elements" }
+  ],
+  "implementations": [
+    {
+      "id": "lean.floatArrayAxpy.loop_uset",
+      "language": "lean",
+      "name": "Lean loop_uset",
+      "sourceFile": "NumLeanPerf/FloatArrayAxpy/Implementations.lean",
+      "symbol": "floatArrayAxpy.loop_uset"
+    },
+    {
+      "id": "lean.floatArrayAxpy.loop_fset",
+      "language": "lean",
+      "name": "Lean loop_fset",
+      "sourceFile": "NumLeanPerf/FloatArrayAxpy/Implementations.lean",
+      "symbol": "floatArrayAxpy.loop_fset"
+    },
+    {
+      "id": "lean.floatArrayAxpy.loop_set",
+      "language": "lean",
+      "name": "Lean loop_set",
+      "sourceFile": "NumLeanPerf/FloatArrayAxpy/Implementations.lean",
+      "symbol": "floatArrayAxpy.loop_set"
+    },
+    {
+      "id": "c.floatArrayAxpy.loop",
+      "language": "c",
+      "name": "C double loop",
+      "sourceFile": "NumLeanPerf/FloatArrayAxpy/float_array_axpy.c",
+      "symbol": "float_array_axpy_loop"
+    }
+  ]
+}
