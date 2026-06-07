@@ -34,5 +34,14 @@ def floatArraySum.usize_loop_get! (xs : FloatArray) : Float := Id.run do
     s := s + xs[i]!
   return s
 
+def floatArraySum.usize_while_get! (xs : FloatArray) : Float := Id.run do
+  let mut s := 0
+  let mut i : USize := 0
+  while i < xs.size.toUSize do
+    s := s + xs[i]!
+    i := i + 1
+  return s
+
+
 @[extern "lean_float_array_sum"]
 opaque floatArraySum.c_loop (xs : @& FloatArray) : Float
