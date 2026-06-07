@@ -2,30 +2,6 @@
 
 Benchmarks for comparing Lean numeric code with native C baselines.
 
-## Layout
-
-Each benchmark lives in its own directory under `NumLeanPerf/`:
-
-```text
-NumLeanPerf/FloatArraySum/
-  Implementations.lean
-  Bench.lean
-  float_array_sum.c
-```
-
-Generic benchmark infrastructure lives outside benchmark directories:
-
-```text
-NumLeanPerf/Benchmark/Common.lean
-benchmarks/run.py
-benchmarks/site/
-benchmarks/results/
-```
-
-`benchmarks/run.py` discovers benchmarks by finding `NumLeanPerf/*/Bench.lean`. New benchmarks should not require edits to `benchmarks/run.py` or the website.
-
-Lake recursively compiles every `.c` file under `NumLeanPerf/` into one static library and links it into the Lean executables. C implementations are called directly from Lean using `@[extern]`; there is no separate C benchmark executable or C harness.
-
 ## Build
 
 Build the library, example executable, and benchmark executables:
@@ -81,6 +57,31 @@ Measurement safeguards:
 - Outputs are consumed so implementations cannot be eliminated as dead code.
 - C implementations are called through Lean FFI and timed by the same Lean harness as Lean implementations.
 - `FloatArrayAdd` measures construction of the output array. It does not intentionally measure an extra full traversal of the output array.
+
+## Layout
+
+Each benchmark lives in its own directory under `NumLeanPerf/`:
+
+```text
+NumLeanPerf/FloatArraySum/
+  Implementations.lean
+  Bench.lean
+  float_array_sum.c
+```
+
+Generic benchmark infrastructure lives outside benchmark directories:
+
+```text
+NumLeanPerf/Benchmark/Common.lean
+benchmarks/run.py
+benchmarks/site/
+benchmarks/results/
+```
+
+`benchmarks/run.py` discovers benchmarks by finding `NumLeanPerf/*/Bench.lean`. New benchmarks should not require edits to `benchmarks/run.py` or the website.
+
+Lake recursively compiles every `.c` file under `NumLeanPerf/` into one static library and links it into the Lean executables. C implementations are called directly from Lean using `@[extern]`; there is no separate C benchmark executable or C harness.
+
 
 ## Add A Benchmark
 
@@ -254,25 +255,3 @@ python3 -m http.server 8000
 Then visit `http://localhost:8000/benchmarks/site/`.
 
 The viewer loads `benchmarks/results/index.json`, lets you choose a run and benchmark, plots mean time against array size for each implementation, and shows implementation code/details when hovering graph points or table rows.
-
-## GitHub Pages
-
-The GitHub workflow builds the Lean project on pushes, pull requests, and manual runs. On pushes to `main` or `master`, it publishes the committed static site and committed result JSON files to GitHub Pages.
-
-Benchmarks are not run in CI. Run benchmarks manually on the target machine, commit the generated files under `benchmarks/results/`, and push. The next Pages deployment will publish those results.
-
-After enabling GitHub Pages for Actions in the repository settings, the site is available at:
-
-```text
-https://lecopivo.github.io/NumLeanPerf/benchmarks/site/
-```
-
-The viewer stores the selected benchmark, run/date, size, and table sort in the URL. You can share a specific view by copying the browser URL, for example:
-
-```text
-https://lecopivo.github.io/NumLeanPerf/benchmarks/site/?benchmark=float-array-sum&run=2026-06-07T194105Z&size=1000&sort=mean&dir=asc&errors=1
-```
-
-The graph can show error bars for `mean ± stddev`. Toggle them with the **Error bars** checkbox. The checkbox state is also stored in the URL as `errors=1` or `errors=0`.
-
-Click a graph legend item or measurement table row to use that implementation as a relative baseline. The graph then displays every implementation as a multiple of the baseline at the same array size. Click the same implementation again or **Clear baseline** to return to absolute time. The selected baseline is stored in the URL as `baseline=<implementation-id>`.
