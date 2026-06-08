@@ -1,3 +1,5 @@
+import NumLeanPerf.Data.UIntRange
+
 def floatArraySum.nat_rec (xs : FloatArray) : Float :=
   go 0 0
 where
@@ -32,6 +34,12 @@ def floatArraySum.usize_loop_get! (xs : FloatArray) : Float := Id.run do
   let mut s := 0
   for (i : USize) in 0...(xs.size.toUSize) do
     s := s + xs[i]!
+  return s
+
+def floatArraySum.usize_range_uget (xs : FloatArray) : Float := Id.run do
+  let mut s := 0
+  for i in NumLeanPerf.uSizeRange 0 xs.size.toUSize do
+    s := s + xs.uget i sorry
   return s
 
 def floatArraySum.usize_while_get! (xs : FloatArray) : Float := Id.run do

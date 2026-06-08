@@ -1,3 +1,5 @@
+import NumLeanPerf.Data.FloatArray
+
 -- C <- A*B + C  (alpha=1, beta=1); A, B, C are n×n (row-major)
 
 def floatArrayGemm.usize_loop_ijk (n : USize) (a b c : FloatArray) : FloatArray := Id.run do
@@ -72,6 +74,62 @@ where
       goJ row brow aik (j + 1) (c.uset idx (cij + aik * bkj) sorry)
     else
       c
+
+def floatArrayGemm.usize_range_ijk_uget (n : USize) (a b c : FloatArray) : FloatArray := Id.run do
+  let mut c := c
+  for i in NumLeanPerf.uSizeRange 0 n do
+    let row := i * n
+    for j in NumLeanPerf.uSizeRange 0 n do
+      let idx := row + j
+      let mut sum := c.uget idx sorry
+      for k in NumLeanPerf.uSizeRange 0 n do
+        let aik := a.uget (row + k) sorry
+        let bkj := b.uget (k * n + j) sorry
+        sum := sum + aik * bkj
+      c := c.uset idx sum sorry
+  return c
+
+def floatArrayGemm.usize_range_ikj_uget (n : USize) (a b c : FloatArray) : FloatArray := Id.run do
+  let mut c := c
+  for i in NumLeanPerf.uSizeRange 0 n do
+    let row := i * n
+    for k in NumLeanPerf.uSizeRange 0 n do
+      let brow := k * n
+      let aik := a.uget (row + k) sorry
+      for j in NumLeanPerf.uSizeRange 0 n do
+        let idx := row + j
+        let cij := c.uget idx sorry
+        let bkj := b.uget (brow + j) sorry
+        c := c.uset idx (cij + aik * bkj) sorry
+  return c
+
+def floatArrayGemm.usize_range_ijk_unsafe_set (n : USize) (a b c : FloatArray) : FloatArray := Id.run do
+  let mut c := c
+  for i in NumLeanPerf.uSizeRange 0 n do
+    let row := i * n
+    for j in NumLeanPerf.uSizeRange 0 n do
+      let idx := row + j
+      let mut sum := c.uget idx sorry
+      for k in NumLeanPerf.uSizeRange 0 n do
+        let aik := a.uget (row + k) sorry
+        let bkj := b.uget (k * n + j) sorry
+        sum := sum + aik * bkj
+      c := c.unsafeSet idx sum
+  return c
+
+def floatArrayGemm.usize_range_ikj_unsafe_set (n : USize) (a b c : FloatArray) : FloatArray := Id.run do
+  let mut c := c
+  for i in NumLeanPerf.uSizeRange 0 n do
+    let row := i * n
+    for k in NumLeanPerf.uSizeRange 0 n do
+      let brow := k * n
+      let aik := a.uget (row + k) sorry
+      for j in NumLeanPerf.uSizeRange 0 n do
+        let idx := row + j
+        let cij := c.uget idx sorry
+        let bkj := b.uget (brow + j) sorry
+        c := c.unsafeSet idx (cij + aik * bkj)
+  return c
 
 @[extern "lean_float_array_gemm_ijk"]
 opaque floatArrayGemm.c_loop_ijk (n : USize) (a : @& FloatArray) (b : @& FloatArray) (c : FloatArray) : FloatArray

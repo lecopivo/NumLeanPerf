@@ -46,6 +46,14 @@ def sumImplementations : List (BenchmarkImplementation (FloatArray → Float)) :
     run := floatArraySum.usize_loop_get!
   },
   {
+    id := "lean.floatArraySum.usize_range_uget"
+    language := "lean"
+    name := "Lean usize_range_uget"
+    sourceFile := "NumLeanPerf/FloatArraySum/Implementations.lean"
+    symbol := "floatArraySum.usize_range_uget"
+    run := floatArraySum.usize_range_uget
+  },
+  {
     id := "lean.floatArraySum.usize_while_get!"
     language := "lean"
     name := "Lean usize_while_get!"

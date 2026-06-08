@@ -31,6 +31,22 @@ def axpyImplementations : List (BenchmarkImplementation (FloatArray → FloatArr
     run := floatArrayAxpy.loop_set 1.234
   },
   {
+    id := "lean.floatArrayAxpy.usize_range_uset"
+    language := "lean"
+    name := "Lean usize_range_uset"
+    sourceFile := "NumLeanPerf/FloatArrayAxpy/Implementations.lean"
+    symbol := "floatArrayAxpy.usize_range_uset"
+    run := floatArrayAxpy.usize_range_uset 1.234
+  },
+  {
+    id := "lean.floatArrayAxpy.usize_range_unsafe_set"
+    language := "lean"
+    name := "Lean usize_range_unsafe_set"
+    sourceFile := "NumLeanPerf/FloatArrayAxpy/Implementations.lean"
+    symbol := "floatArrayAxpy.usize_range_unsafe_set"
+    run := floatArrayAxpy.usize_range_unsafe_set 1.234
+  },
+  {
     id := "lean.floatArrayAxpy.while_uset"
     language := "lean"
     name := "Lean while_uset"

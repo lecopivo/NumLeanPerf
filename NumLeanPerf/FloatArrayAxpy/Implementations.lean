@@ -1,3 +1,5 @@
+import NumLeanPerf.Data.FloatArray
+
 def floatArrayAxpy.loop_uset (a : Float) (x y : FloatArray) : FloatArray := Id.run do
   let mut y := y
   for i in 0...(y.size.toUSize) do
@@ -20,6 +22,22 @@ def floatArrayAxpy.loop_set (a : Float) (x y : FloatArray) : FloatArray := Id.ru
     let yi := y.get! i.toNat
     let xi := x.get! i.toNat
     y := y.set! i.toNat (yi + a * xi)
+  return y
+
+def floatArrayAxpy.usize_range_uset (a : Float) (x y : FloatArray) : FloatArray := Id.run do
+  let mut y := y
+  for i in NumLeanPerf.uSizeRange 0 y.size.toUSize do
+    let yi := y.uget i sorry
+    let xi := x.uget i sorry
+    y := y.uset i (yi + a * xi) sorry
+  return y
+
+def floatArrayAxpy.usize_range_unsafe_set (a : Float) (x y : FloatArray) : FloatArray := Id.run do
+  let mut y := y
+  for i in NumLeanPerf.uSizeRange 0 y.size.toUSize do
+    let yi := y.uget i sorry
+    let xi := x.uget i sorry
+    y := y.unsafeSet i (yi + a * xi)
   return y
 
 def floatArrayAxpy.while_uset (a : Float) (x y : FloatArray) : FloatArray := Id.run do

@@ -12,6 +12,12 @@ def nrm2Implementations : List (BenchmarkImplementation (FloatArray → Float)) 
     sourceFile := "NumLeanPerf/FloatArrayNrm2/Implementations.lean"
     symbol := "floatArrayNrm2.usize_loop"
     run := floatArrayNrm2.usize_loop },
+  { id := "lean.floatArrayNrm2.usize_range_uget"
+    language := "lean"
+    name := "Lean usize_range_uget"
+    sourceFile := "NumLeanPerf/FloatArrayNrm2/Implementations.lean"
+    symbol := "floatArrayNrm2.usize_range_uget"
+    run := floatArrayNrm2.usize_range_uget },
   { id := "c.floatArrayNrm2.loop"
     language := "c"
     name := "C loop"

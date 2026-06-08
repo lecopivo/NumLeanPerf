@@ -3,6 +3,7 @@ open Lake DSL System
 
 package «NumLeanPerf» where
   version := v!"0.1.0"
+  moreLeancArgs := #["-march=native"]
 
 lean_lib «NumLeanPerf»
 

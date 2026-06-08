@@ -23,6 +23,14 @@ def addImplementations : List (BenchmarkImplementation (FloatArray → FloatArra
     run := floatArrayAdd.usize_loop_uget
   },
   {
+    id := "lean.floatArrayAdd.usize_range_uget"
+    language := "lean"
+    name := "Lean usize_range_uget"
+    sourceFile := "NumLeanPerf/FloatArrayAdd/Implementations.lean"
+    symbol := "floatArrayAdd.usize_range_uget"
+    run := floatArrayAdd.usize_range_uget
+  },
+  {
     id := "c.floatArrayAdd.malloc_loop"
     language := "c"
     name := "C loop via Lean FFI"

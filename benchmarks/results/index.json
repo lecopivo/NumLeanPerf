@@ -2,6 +2,24 @@
   "schemaVersion": 1,
   "runs": [
     {
+      "runId": "2026-06-08T193120Z",
+      "createdAt": "2026-06-08T19:31:20Z",
+      "file": "2026-06-08T193120Z-all.json",
+      "benchmarks": [
+        "float-array-add",
+        "float-array-axpy",
+        "float-array-dot",
+        "float-array-gemm",
+        "float-array-gemv",
+        "float-array-ger",
+        "float-array-nrm2",
+        "float-array-sin",
+        "float-array-sum",
+        "float-array-swap"
+      ],
+      "schemaVersion": 1
+    },
+    {
       "runId": "2026-06-08T164552Z",
       "createdAt": "2026-06-08T16:45:52Z",
       "file": "2026-06-08T164552Z-all.json",
