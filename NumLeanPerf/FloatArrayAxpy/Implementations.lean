@@ -1,24 +1,24 @@
 def floatArrayAxpy.loop_uset (a : Float) (x y : FloatArray) : FloatArray := Id.run do
   let mut y := y
   for i in 0...(y.size.toUSize) do
-    let yi := y[i]!
-    let xi := x[i]!
+    let yi := y.uget i sorry
+    let xi := x.uget i sorry
     y := y.uset i (yi + a * xi) sorry
   return y
 
 def floatArrayAxpy.loop_fset (a : Float) (x y : FloatArray) : FloatArray := Id.run do
   let mut y := y
   for i in 0...(y.size.toUSize) do
-    let yi := y[i]!
-    let xi := x[i]!
+    let yi := y.get i.toNat sorry
+    let xi := x.get i.toNat sorry
     y := y.set i.toNat (yi + a * xi) sorry
   return y
 
 def floatArrayAxpy.loop_set (a : Float) (x y : FloatArray) : FloatArray := Id.run do
   let mut y := y
   for i in 0...(y.size.toUSize) do
-    let yi := y[i]!
-    let xi := x[i]!
+    let yi := x.get! i.toNat
+    let xi := x.get! i.toNat
     y := y.set! i.toNat (yi + a * xi)
   return y
 
@@ -39,7 +39,9 @@ private structure AxpyState where
 def floatArrayAxpy.while_custom_state (a : Float) (x y : FloatArray) : FloatArray := Id.run do
   let mut s : AxpyState := { y := y, i := 0 }
   while s.i < s.y.size.toUSize do
-    s := { y := s.y.uset s.i (s.y[s.i]! + a * x[s.i]!) sorry, i := s.i + 1 }
+    let xi := x.uget s.i sorry
+    let yi := s.y.uget s.i sorry
+    s := { y := s.y.uset s.i (yi + a * xi) sorry, i := s.i + 1 }
   return s.y
 
 @[extern "lean_float_array_axpy"]
