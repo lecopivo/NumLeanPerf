@@ -1,21 +1,13 @@
-def floatArrayAdd.nat_loop_get! (xs ys : FloatArray) : FloatArray := Id.run do
+def floatArrayAdd.nat_loop_get (xs ys : FloatArray) : FloatArray := Id.run do
   let mut out := FloatArray.emptyWithCapacity xs.size
-  for h : i in 0...xs.size do
-    out := out.push (xs[i] + ys[i]!)
+  for h : i in 0...(min xs.size ys.size) do
+    out := out.push (xs[i] + ys[i])
   return out
 
-def floatArrayAdd.usize_loop_get! (xs ys : FloatArray) : FloatArray := Id.run do
+def floatArrayAdd.usize_loop_uget (xs ys : FloatArray) : FloatArray := Id.run do
   let mut out := FloatArray.emptyWithCapacity xs.size
   for (i : USize) in 0...(xs.size.toUSize) do
-    out := out.push (xs[i]! + ys[i]!)
-  return out
-
-def floatArrayAdd.foreach_zip (xs ys : FloatArray) : FloatArray := Id.run do
-  let mut out := FloatArray.emptyWithCapacity xs.size
-  let mut i := 0
-  for x in xs do
-    out := out.push (x + ys[i]!)
-    i := i + 1
+    out := out.push (xs.uget i sorry + ys.uget i sorry)
   return out
 
 @[extern "lean_float_array_add"]

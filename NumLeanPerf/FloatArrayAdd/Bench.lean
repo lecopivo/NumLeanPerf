@@ -7,28 +7,20 @@ def floatArrayAddBenchmarkDescription := "Elementwise add two FloatArrays and re
 
 def addImplementations : List (BenchmarkImplementation (FloatArray → FloatArray → FloatArray)) := [
   {
-    id := "lean.floatArrayAdd.nat_loop_get!"
+    id := "lean.floatArrayAdd.nat_loop_get"
     language := "lean"
-    name := "Lean nat_loop_get!"
+    name := "Lean nat_loop_get"
     sourceFile := "NumLeanPerf/FloatArrayAdd/Implementations.lean"
-    symbol := "floatArrayAdd.nat_loop_get!"
-    run := floatArrayAdd.nat_loop_get!
+    symbol := "floatArrayAdd.nat_loop_get"
+    run := floatArrayAdd.nat_loop_get
   },
   {
-    id := "lean.floatArrayAdd.usize_loop_get!"
+    id := "lean.floatArrayAdd.usize_loop_uget"
     language := "lean"
-    name := "Lean usize_loop_get!"
+    name := "Lean usize_loop_uget"
     sourceFile := "NumLeanPerf/FloatArrayAdd/Implementations.lean"
-    symbol := "floatArrayAdd.usize_loop_get!"
-    run := floatArrayAdd.usize_loop_get!
-  },
-  {
-    id := "lean.floatArrayAdd.foreach_zip"
-    language := "lean"
-    name := "Lean foreach_zip"
-    sourceFile := "NumLeanPerf/FloatArrayAdd/Implementations.lean"
-    symbol := "floatArrayAdd.foreach_zip"
-    run := floatArrayAdd.foreach_zip
+    symbol := "floatArrayAdd.usize_loop_uget"
+    run := floatArrayAdd.usize_loop_uget
   },
   {
     id := "c.floatArrayAdd.malloc_loop"
