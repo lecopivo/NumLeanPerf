@@ -9,3 +9,4 @@ import NumLeanPerf.FloatArrayNrm2.Implementations
 import NumLeanPerf.FloatArrayGemv.Implementations
 import NumLeanPerf.FloatArrayGer.Implementations
 import NumLeanPerf.FloatArrayGemm.Implementations
+import NumLeanPerf.FloatArraySin.Implementations

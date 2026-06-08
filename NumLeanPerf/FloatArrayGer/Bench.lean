@@ -7,12 +7,6 @@ def floatArrayGerBenchmarkDescription :=
   "Rank-1 update A += x*yᵀ (BLAS ger, alpha=1) for a square n×n matrix. Sizes are the matrix dimension n."
 
 def gerImplementations : List (BenchmarkImplementation (FloatArray → FloatArray → FloatArray → FloatArray)) := [
-  { id := "lean.floatArrayGer.nat_loop"
-    language := "lean"
-    name := "Lean nat_loop"
-    sourceFile := "NumLeanPerf/FloatArrayGer/Implementations.lean"
-    symbol := "floatArrayGer.nat_loop"
-    run := floatArrayGer.nat_loop },
   { id := "lean.floatArrayGer.usize_loop"
     language := "lean"
     name := "Lean usize_loop"

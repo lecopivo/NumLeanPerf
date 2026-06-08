@@ -7,12 +7,6 @@ def floatArrayGemvBenchmarkDescription :=
   "y <- A*x + y (BLAS gemv, alpha=1, beta=1) for a square n×n matrix. Sizes are the matrix dimension n."
 
 def gemvImplementations : List (BenchmarkImplementation (FloatArray → FloatArray → FloatArray → FloatArray)) := [
-  { id := "lean.floatArrayGemv.nat_loop"
-    language := "lean"
-    name := "Lean nat_loop"
-    sourceFile := "NumLeanPerf/FloatArrayGemv/Implementations.lean"
-    symbol := "floatArrayGemv.nat_loop"
-    run := floatArrayGemv.nat_loop },
   { id := "lean.floatArrayGemv.usize_loop"
     language := "lean"
     name := "Lean usize_loop"

@@ -6,12 +6,12 @@ def floatArraySwapBenchmarkName := "FloatArray swap"
 def floatArraySwapBenchmarkDescription := "Swap two FloatArrays element-wise."
 
 def swapImplementations : List (BenchmarkImplementation (FloatArray → FloatArray → FloatArray × FloatArray)) := [
-  { id := "lean.floatArraySwap.nat_loop"
+  { id := "lean.floatArraySwap.usize_loop"
     language := "lean"
-    name := "Lean nat_loop"
+    name := "Lean usize_loop"
     sourceFile := "NumLeanPerf/FloatArraySwap/Implementations.lean"
-    symbol := "floatArraySwap.nat_loop"
-    run := floatArraySwap.nat_loop },
+    symbol := "floatArraySwap.usize_loop"
+    run := floatArraySwap.usize_loop },
   { id := "c.floatArraySwap.loop"
     language := "c"
     name := "C loop"

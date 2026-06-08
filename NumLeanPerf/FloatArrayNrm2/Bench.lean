@@ -6,12 +6,6 @@ def floatArrayNrm2BenchmarkName := "FloatArray nrm2"
 def floatArrayNrm2BenchmarkDescription := "Euclidean norm (BLAS nrm2) of a FloatArray."
 
 def nrm2Implementations : List (BenchmarkImplementation (FloatArray → Float)) := [
-  { id := "lean.floatArrayNrm2.foreach_loop"
-    language := "lean"
-    name := "Lean foreach_loop"
-    sourceFile := "NumLeanPerf/FloatArrayNrm2/Implementations.lean"
-    symbol := "floatArrayNrm2.foreach_loop"
-    run := floatArrayNrm2.foreach_loop },
   { id := "lean.floatArrayNrm2.usize_loop"
     language := "lean"
     name := "Lean usize_loop"

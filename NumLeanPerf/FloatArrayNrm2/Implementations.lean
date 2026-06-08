@@ -1,9 +1,3 @@
-def floatArrayNrm2.foreach_loop (xs : FloatArray) : Float := Id.run do
-  let mut s := 0.0
-  for x in xs do
-    s := s + x * x
-  return Float.sqrt s
-
 def floatArrayNrm2.usize_loop (xs : FloatArray) : Float := Id.run do
   let mut s := 0.0
   for i in 0...(xs.size.toUSize) do

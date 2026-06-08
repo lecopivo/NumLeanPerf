@@ -123,8 +123,9 @@ def extract_lean_definition(source, symbol):
     lines = source.splitlines()
     decl = r"(?:partial\s+)?(?:def|opaque)"
     decl_pattern = re.compile(rf"^{decl}\s+{re.escape(symbol)}(?:\s|\(|:)")
-    any_decl_pattern = re.compile(rf"^{decl}\s+")
+    any_decl_pattern = re.compile(r"^(?:(?:private|protected|partial)\s+)*(?:def|opaque|structure)\s+")
     attr_pattern = re.compile(r"^@\[")
+    structure_pattern = re.compile(r"^(?:private\s+)?structure\s+")
 
     decl_start = None
     for idx, line in enumerate(lines):
@@ -134,9 +135,26 @@ def extract_lean_definition(source, symbol):
     if decl_start is None:
         return source
 
+    # Walk backward past @[ attributes
     start = decl_start
     while start > 0 and attr_pattern.match(lines[start - 1]):
         start -= 1
+
+    # Walk backward past an immediately preceding structure block
+    peek = start - 1
+    while peek >= 0 and lines[peek].strip() == "":
+        peek -= 1
+    if peek >= 0 and not re.match(decl, lines[peek]):
+        block_start = peek
+        while block_start > 0:
+            above = lines[block_start - 1]
+            if structure_pattern.match(above):
+                start = block_start - 1
+                break
+            elif re.match(decl, above) or above.strip() == "":
+                break
+            else:
+                block_start -= 1
 
     end = len(lines)
     for idx in range(decl_start + 1, len(lines)):

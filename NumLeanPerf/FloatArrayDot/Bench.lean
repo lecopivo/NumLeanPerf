@@ -6,12 +6,6 @@ def floatArrayDotBenchmarkName := "FloatArray dot"
 def floatArrayDotBenchmarkDescription := "Dot product of two FloatArrays."
 
 def dotImplementations : List (BenchmarkImplementation (FloatArray → FloatArray → Float)) := [
-  { id := "lean.floatArrayDot.nat_loop"
-    language := "lean"
-    name := "Lean nat_loop"
-    sourceFile := "NumLeanPerf/FloatArrayDot/Implementations.lean"
-    symbol := "floatArrayDot.nat_loop"
-    run := floatArrayDot.nat_loop },
   { id := "lean.floatArrayDot.usize_loop"
     language := "lean"
     name := "Lean usize_loop"

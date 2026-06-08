@@ -56,3 +56,6 @@ lean_exe «float-array-ger-bench» where
 
 lean_exe «float-array-gemm-bench» where
   root := `NumLeanPerf.FloatArrayGemm.Bench
+
+lean_exe «float-array-sin-bench» where
+  root := `NumLeanPerf.FloatArraySin.Bench

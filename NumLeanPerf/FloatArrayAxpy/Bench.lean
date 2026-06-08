@@ -39,6 +39,14 @@ def axpyImplementations : List (BenchmarkImplementation (FloatArray → FloatArr
     run := floatArrayAxpy.while_uset 1.234
   },
   {
+    id := "lean.floatArrayAxpy.while_custom_state"
+    language := "lean"
+    name := "Lean while_custom_state"
+    sourceFile := "NumLeanPerf/FloatArrayAxpy/Implementations.lean"
+    symbol := "floatArrayAxpy.while_custom_state"
+    run := floatArrayAxpy.while_custom_state 1.234
+  },
+  {
     id := "c.floatArrayAxpy.loop"
     language := "c"
     name := "C loop via Lean FFI"

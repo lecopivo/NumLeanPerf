@@ -6,28 +6,34 @@ def floatArrayGemmBenchmarkName := "FloatArray gemm"
 def floatArrayGemmBenchmarkDescription :=
   "C <- A*B + C (BLAS gemm, alpha=1, beta=1) for square n×n matrices. Sizes are the matrix dimension n."
 
-def gemmImplementations : List (BenchmarkImplementation (FloatArray → FloatArray → FloatArray → FloatArray)) := [
-  { id := "lean.floatArrayGemm.nat_loop"
+def gemmImplementations : List (BenchmarkImplementation (USize → FloatArray → FloatArray → FloatArray → FloatArray)) := [
+  { id := "lean.floatArrayGemm.usize_loop_ijk"
     language := "lean"
-    name := "Lean nat_loop"
+    name := "Lean usize ijk"
     sourceFile := "NumLeanPerf/FloatArrayGemm/Implementations.lean"
-    symbol := "floatArrayGemm.nat_loop"
-    run := floatArrayGemm.nat_loop },
-  { id := "lean.floatArrayGemm.usize_loop"
+    symbol := "floatArrayGemm.usize_loop_ijk"
+    run := floatArrayGemm.usize_loop_ijk },
+  { id := "lean.floatArrayGemm.usize_loop_ikj"
     language := "lean"
-    name := "Lean usize_loop"
+    name := "Lean usize ikj"
     sourceFile := "NumLeanPerf/FloatArrayGemm/Implementations.lean"
-    symbol := "floatArrayGemm.usize_loop"
-    run := floatArrayGemm.usize_loop },
-  { id := "c.floatArrayGemm.loop"
+    symbol := "floatArrayGemm.usize_loop_ikj"
+    run := floatArrayGemm.usize_loop_ikj },
+  { id := "c.floatArrayGemm.loop_ijk"
     language := "c"
-    name := "C loop"
+    name := "C ijk"
     sourceFile := "NumLeanPerf/FloatArrayGemm/float_array_gemm.c"
-    symbol := "lean_float_array_gemm"
-    run := floatArrayGemm.c_loop }
+    symbol := "lean_float_array_gemm_ijk"
+    run := floatArrayGemm.c_loop_ijk },
+  { id := "c.floatArrayGemm.loop_ikj"
+    language := "c"
+    name := "C ikj"
+    sourceFile := "NumLeanPerf/FloatArrayGemm/float_array_gemm.c"
+    symbol := "lean_float_array_gemm_ikj"
+    run := floatArrayGemm.c_loop_ikj }
 ]
 
-def gemmImplementation? (name : String) : Option (FloatArray → FloatArray → FloatArray → FloatArray) :=
+def gemmImplementation? (name : String) : Option (USize → FloatArray → FloatArray → FloatArray → FloatArray) :=
   (gemmImplementations.find? (fun e => e.id == name)).map (·.run)
 
 -- Sizes are matrix dimensions n; batchSizeExponent=3 calibrates batch for O(n³) work per call
@@ -57,5 +63,5 @@ def main (args : List String) : IO UInt32 := do
   let cInputs := mkFloatArrayInputs poolSize (n * n) 2.0
   printTimingLines samples warmups batchSize (fun i =>
     let p := i % poolSize
-    pure (fingerprintFloatArray (impl aInputs[p]! bInputs[p]! cInputs[p]!)))
+    pure (fingerprintFloatArray (impl n.toUSize aInputs[p]! bInputs[p]! cInputs[p]!)))
   return 0
