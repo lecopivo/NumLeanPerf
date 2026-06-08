@@ -12,6 +12,12 @@ def dotImplementations : List (BenchmarkImplementation (FloatArray → FloatArra
     sourceFile := "NumLeanPerf/FloatArrayDot/Implementations.lean"
     symbol := "floatArrayDot.usize_loop"
     run := floatArrayDot.usize_loop },
+  { id := "lean.floatArrayDot.usize_rec_uget"
+    language := "lean"
+    name := "Lean usize_rec_uget"
+    sourceFile := "NumLeanPerf/FloatArrayDot/Implementations.lean"
+    symbol := "floatArrayDot.usize_rec_uget"
+    run := floatArrayDot.usize_rec_uget },
   { id := "c.floatArrayDot.loop"
     language := "c"
     name := "C loop"

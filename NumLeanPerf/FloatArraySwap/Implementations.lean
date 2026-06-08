@@ -8,5 +8,16 @@ def floatArraySwap.usize_loop (x y : FloatArray) : FloatArray × FloatArray := I
     ys := ys.uset i tmp sorry
   return (xs, ys)
 
+partial def floatArraySwap.usize_rec_uget (x y : FloatArray) : FloatArray × FloatArray :=
+  go 0 x y
+where
+  go (i : USize) (x y : FloatArray) : FloatArray × FloatArray :=
+    if h : i.toNat < x.size then
+      let xi := x.uget i h
+      let yi := y.uget i sorry
+      go (i + 1) (x.uset i yi h) (y.uset i xi sorry)
+    else
+      (x, y)
+
 @[extern "lean_float_array_swap"]
 opaque floatArraySwap.c_loop (x y : FloatArray) : FloatArray × FloatArray

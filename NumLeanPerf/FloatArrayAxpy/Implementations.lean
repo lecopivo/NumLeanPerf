@@ -17,7 +17,7 @@ def floatArrayAxpy.loop_fset (a : Float) (x y : FloatArray) : FloatArray := Id.r
 def floatArrayAxpy.loop_set (a : Float) (x y : FloatArray) : FloatArray := Id.run do
   let mut y := y
   for i in 0...(y.size.toUSize) do
-    let yi := x.get! i.toNat
+    let yi := y.get! i.toNat
     let xi := x.get! i.toNat
     y := y.set! i.toNat (yi + a * xi)
   return y

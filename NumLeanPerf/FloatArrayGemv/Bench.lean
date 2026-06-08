@@ -13,6 +13,12 @@ def gemvImplementations : List (BenchmarkImplementation (FloatArray → FloatArr
     sourceFile := "NumLeanPerf/FloatArrayGemv/Implementations.lean"
     symbol := "floatArrayGemv.usize_loop"
     run := floatArrayGemv.usize_loop },
+  { id := "lean.floatArrayGemv.usize_rec_uget"
+    language := "lean"
+    name := "Lean usize_rec_uget"
+    sourceFile := "NumLeanPerf/FloatArrayGemv/Implementations.lean"
+    symbol := "floatArrayGemv.usize_rec_uget"
+    run := floatArrayGemv.usize_rec_uget },
   { id := "c.floatArrayGemv.loop"
     language := "c"
     name := "C loop"

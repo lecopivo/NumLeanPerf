@@ -13,6 +13,12 @@ def gerImplementations : List (BenchmarkImplementation (FloatArray → FloatArra
     sourceFile := "NumLeanPerf/FloatArrayGer/Implementations.lean"
     symbol := "floatArrayGer.usize_loop"
     run := floatArrayGer.usize_loop },
+  { id := "lean.floatArrayGer.usize_rec_uget"
+    language := "lean"
+    name := "Lean usize_rec_uget"
+    sourceFile := "NumLeanPerf/FloatArrayGer/Implementations.lean"
+    symbol := "floatArrayGer.usize_rec_uget"
+    run := floatArrayGer.usize_rec_uget },
   { id := "c.floatArrayGer.loop"
     language := "c"
     name := "C loop"

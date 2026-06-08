@@ -12,6 +12,12 @@ def swapImplementations : List (BenchmarkImplementation (FloatArray → FloatArr
     sourceFile := "NumLeanPerf/FloatArraySwap/Implementations.lean"
     symbol := "floatArraySwap.usize_loop"
     run := floatArraySwap.usize_loop },
+  { id := "lean.floatArraySwap.usize_rec_uget"
+    language := "lean"
+    name := "Lean usize_rec_uget"
+    sourceFile := "NumLeanPerf/FloatArraySwap/Implementations.lean"
+    symbol := "floatArraySwap.usize_rec_uget"
+    run := floatArraySwap.usize_rec_uget },
   { id := "c.floatArraySwap.loop"
     language := "c"
     name := "C loop"
