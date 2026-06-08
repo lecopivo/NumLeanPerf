@@ -54,6 +54,14 @@ def sumImplementations : List (BenchmarkImplementation (FloatArray → Float)) :
     run := floatArraySum.usize_while_get!
   },
   {
+    id := "lean.floatArraySum.while_custom_state"
+    language := "lean"
+    name := "Lean while_custom_state"
+    sourceFile := "NumLeanPerf/FloatArraySum/Implementations.lean"
+    symbol := "floatArraySum.while_custom_state"
+    run := floatArraySum.while_custom_state
+  },
+  {
     id := "c.floatArraySum.loop"
     language := "c"
     name := "C double loop"

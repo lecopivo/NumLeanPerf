@@ -17,14 +17,15 @@ const baselineStatus = document.querySelector("#baselineStatus");
 const baselineSelect = document.querySelector("#baselineSelect");
 const clearBaselineButton = document.querySelector("#clearBaselineButton");
 const fileInput = document.querySelector("#fileInput");
+const benchmarkDescription = document.querySelector("#benchmarkDescription");
 const implementationTitle = document.querySelector("#implementationTitle");
 const implementationMeta = document.querySelector("#implementationMeta");
 const implementationCode = document.querySelector("#implementationCode");
 const resultsBody = document.querySelector("#resultsBody");
 const environmentList = document.querySelector("#environmentList");
 
-async function loadJson(url) {
-  const response = await fetch(url);
+async function loadJson(url, opts = {}) {
+  const response = await fetch(url, opts);
   if (!response.ok) {
     throw new Error(`Failed to load ${url}: ${response.status}`);
   }
@@ -441,23 +442,32 @@ function updateBenchmarkOptionsFromIndex() {
 }
 
 function updateRunOptionsForBenchmark(benchmarkId) {
+  const previous = runSelect.value;
   runSelect.innerHTML = "";
-  const runs = (state.index?.runs || []).filter((run) => (run.benchmarks || []).includes(benchmarkId));
-  for (const run of runs) {
+  for (const run of (state.index?.runs || []).filter((r) => (r.benchmarks || []).includes(benchmarkId))) {
     const option = window.document.createElement("option");
     option.value = run.file;
     option.textContent = run.createdAt;
     runSelect.appendChild(option);
+  }
+  if (previous && [...runSelect.options].some((o) => o.value === previous)) {
+    runSelect.value = previous;
   }
 }
 
 function renderCurrent() {
   const document = state.currentDocument;
   if (!document) return;
-  const benchmarkId = benchmarkSelect.value || document.benchmarks[0]?.id;
+  let benchmarkId = benchmarkSelect.value || document.benchmarks[0]?.id;
+  if (benchmarkId && !document.benchmarks.some((b) => b.id === benchmarkId)) {
+    benchmarkId = document.benchmarks[0]?.id;
+    if (benchmarkId) benchmarkSelect.value = benchmarkId;
+  }
   if (state.baselineImplementationId && !implementationsFor(document, benchmarkId).some((impl) => impl.id === state.baselineImplementationId)) {
     state.baselineImplementationId = null;
   }
+  const benchmark = document.benchmarks.find((b) => b.id === benchmarkId);
+  if (benchmarkDescription) benchmarkDescription.textContent = benchmark?.description || "";
   updateBaselineOptions(document, benchmarkId);
   updateChart(document, benchmarkId);
   updateSizeOptions(document, benchmarkId);
@@ -485,7 +495,7 @@ async function initFromIndex() {
   state.baselineImplementationId = urlState.baseline;
   state.pendingSize = urlState.size;
 
-  state.index = await loadJson(indexUrl);
+  state.index = await loadJson(indexUrl, { cache: "no-cache" });
   updateBenchmarkOptionsFromIndex();
   if (urlState.benchmark && [...benchmarkSelect.options].some((option) => option.value === urlState.benchmark)) {
     benchmarkSelect.value = urlState.benchmark;
@@ -527,14 +537,13 @@ for (const button of window.document.querySelectorAll("[data-sort]")) {
   });
 }
 benchmarkSelect.addEventListener("change", async () => {
-  if (state.index) {
-    updateRunOptionsForBenchmark(benchmarkSelect.value);
-    if (runSelect.value) {
-      await loadRun(runSelect.value);
-      return;
-    }
+  if (!state.index) { renderCurrent(); return; }
+  updateRunOptionsForBenchmark(benchmarkSelect.value);
+  if (runSelect.value) {
+    await loadRun(runSelect.value);
+  } else {
+    renderCurrent();
   }
-  renderCurrent();
 });
 fileInput.addEventListener("change", async () => {
   const file = fileInput.files[0];

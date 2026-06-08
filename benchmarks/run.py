@@ -224,17 +224,23 @@ def summarize(values):
     }
 
 
-def batch_size_for(size):
+def batch_size_for(size, exponent=1):
     if size <= 0:
         return 1
-    return max(1, min(10000, math.ceil(10_000_000 / size)))
+    return max(1, min(10000, math.ceil(10_000_000 / (size ** exponent))))
 
 
 def safe_timestamp(value):
     return re.sub(r"[^0-9A-Za-z-]", "", value.replace(":", ""))
 
 
-def run_benchmarks(benchmarks, selected, sizes, samples, warmups):
+def sizes_for_bench(bench, explicit_sizes, default_sizes):
+    if explicit_sizes is not None:
+        return explicit_sizes
+    return bench.get("sizes") or default_sizes
+
+
+def run_benchmarks(benchmarks, selected, explicit_sizes, default_sizes, samples, warmups):
     results = []
     implementation_records = []
 
@@ -246,8 +252,9 @@ def run_benchmarks(benchmarks, selected, sizes, samples, warmups):
             impl_record["code"] = implementation_code(impl)
             implementation_records.append(impl_record)
 
-        for size in sizes:
-            batch_size = batch_size_for(size)
+        exponent = bench.get("batchSizeExponent", 1)
+        for size in sizes_for_bench(bench, explicit_sizes, default_sizes):
+            batch_size = batch_size_for(size, exponent)
             for impl in bench["implementations"]:
                 exe = executable_for(bench, impl)
                 stdout = run([str(exe), impl["id"], str(size), str(samples), str(warmups), str(batch_size)])
@@ -298,12 +305,13 @@ def main():
     args = parser.parse_args()
 
     selected = args.benchmark or sorted(benchmarks)
-    sizes = args.sizes or SIZE_PRESETS[args.size_preset]
+    explicit_sizes = args.sizes
+    default_sizes = SIZE_PRESETS[args.size_preset]
     if args.samples <= 0:
         raise SystemExit("--samples must be positive")
     if args.warmups < 0:
         raise SystemExit("--warmups must be non-negative")
-    if any(size <= 0 for size in sizes):
+    if explicit_sizes is not None and any(size <= 0 for size in explicit_sizes):
         raise SystemExit("all sizes must be positive")
 
     command = " ".join(["benchmarks/run.py", *os.sys.argv[1:]])
@@ -313,7 +321,7 @@ def main():
 
     created_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     run_id = safe_timestamp(created_at)
-    implementation_records, results = run_benchmarks(benchmarks, selected, sizes, args.samples, args.warmups)
+    implementation_records, results = run_benchmarks(benchmarks, selected, explicit_sizes, default_sizes, args.samples, args.warmups)
 
     benchmark_records = []
     for bench_id in selected:

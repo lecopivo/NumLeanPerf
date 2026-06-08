@@ -59,14 +59,20 @@ def renderImplementationMetadata {α : Type} (impl : BenchmarkImplementation α)
   "\"symbol\":" ++ jsonString impl.symbol ++
   "}"
 
-def renderBenchmarkMetadata {α : Type} (id name description : String) (impls : List (BenchmarkImplementation α)) : String :=
+def renderBenchmarkMetadata {α : Type} (id name description : String) (impls : List (BenchmarkImplementation α)) (sizes : List Nat := []) (batchSizeExponent : Nat := 1) : String :=
   let implementations := String.intercalate "," (impls.map renderImplementationMetadata)
+  let sizesField := if sizes.isEmpty then ""
+                    else ",\"sizes\":[" ++ String.intercalate "," (sizes.map toString) ++ "]"
+  let exponentField := if batchSizeExponent == 1 then ""
+                       else ",\"batchSizeExponent\":" ++ toString batchSizeExponent
   "{" ++
   "\"id\":" ++ jsonString id ++ "," ++
   "\"name\":" ++ jsonString name ++ "," ++
   "\"description\":" ++ jsonString description ++ "," ++
   "\"inputAxes\":[{\"id\":\"arraySize\",\"name\":\"Array size\",\"unit\":\"elements\"}]," ++
   "\"implementations\":[" ++ implementations ++ "]" ++
+  sizesField ++
+  exponentField ++
   "}"
 
 def runBatch (batchSize startIndex : Nat) (runOnce : Nat → IO Float) : IO Float := do
@@ -90,3 +96,10 @@ def printTimingLines (samples warmups batchSize : Nat) (runOnce : Nat → IO Flo
 def parseNatArg? (args : List String) (idx : Nat) : Option Nat := do
   let s ← args[idx]?
   s.toNat?
+
+-- Integer square root: largest k such that k*k <= n (for perfect squares, exact)
+def matrixDim (n : Nat) : Nat := Id.run do
+  let mut s : Nat := 0
+  while (s + 1) * (s + 1) <= n do
+    s := s + 1
+  return s

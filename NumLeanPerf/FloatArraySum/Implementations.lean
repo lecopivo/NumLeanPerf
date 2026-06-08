@@ -42,6 +42,18 @@ def floatArraySum.usize_while_get! (xs : FloatArray) : Float := Id.run do
     i := i + 1
   return s
 
+structure State where
+  sum : Float
+  idx : USize
+
+def floatArraySum.while_custom_state (xs : FloatArray) : Float := Id.run do
+  let mut s : State :=  { sum := 0, idx := 0 }
+  while s.idx < xs.size.toUSize do
+    s := { s  with
+      sum := s.sum + xs[s.idx]!,
+      idx := s.idx + 1}
+  return s.sum
+
 
 @[extern "lean_float_array_sum"]
 opaque floatArraySum.c_loop (xs : @& FloatArray) : Float

@@ -141,6 +141,16 @@ main {
   padding: 0 2rem 2rem;
 }
 
+.benchmarkDescription {
+  padding: 0 2rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.benchmarkDescription:empty {
+  display: none;
+}
+
 .chartCard, .detailsCard, .tableCard, .environmentCard {
   border: 1px solid var(--line);
   border-radius: 1.2rem;

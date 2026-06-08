@@ -38,3 +38,21 @@ lean_exe «float-array-add-bench» where
 
 lean_exe «float-array-axpy-bench» where
   root := `NumLeanPerf.FloatArrayAxpy.Bench
+
+lean_exe «float-array-dot-bench» where
+  root := `NumLeanPerf.FloatArrayDot.Bench
+
+lean_exe «float-array-swap-bench» where
+  root := `NumLeanPerf.FloatArraySwap.Bench
+
+lean_exe «float-array-nrm2-bench» where
+  root := `NumLeanPerf.FloatArrayNrm2.Bench
+
+lean_exe «float-array-gemv-bench» where
+  root := `NumLeanPerf.FloatArrayGemv.Bench
+
+lean_exe «float-array-ger-bench» where
+  root := `NumLeanPerf.FloatArrayGer.Bench
+
+lean_exe «float-array-gemm-bench» where
+  root := `NumLeanPerf.FloatArrayGemm.Bench

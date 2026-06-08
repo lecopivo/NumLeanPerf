@@ -3,3 +3,9 @@
 import NumLeanPerf.FloatArraySum.Implementations
 import NumLeanPerf.FloatArrayAdd.Implementations
 import NumLeanPerf.FloatArrayAxpy.Implementations
+import NumLeanPerf.FloatArrayDot.Implementations
+import NumLeanPerf.FloatArraySwap.Implementations
+import NumLeanPerf.FloatArrayNrm2.Implementations
+import NumLeanPerf.FloatArrayGemv.Implementations
+import NumLeanPerf.FloatArrayGer.Implementations
+import NumLeanPerf.FloatArrayGemm.Implementations
